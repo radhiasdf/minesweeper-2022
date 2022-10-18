@@ -1,12 +1,13 @@
 import pygame
 import shelve
 user_data = shelve.open("user_data")
-#user_data["r_c_m"] = (16, 16, 40)  # setting up default for user data
+#user_data["r_c_m"] = (16, 16, 40)  # setting up default for user data?
 
 pygame.init()
 
 BG_COLOUR = "black"
 FPS = 60
+TARGET_FPS = 60
 MAX_WIN_WIDTH, MAX_WIN_HEIGHT = pygame.display.Info().current_w, pygame.display.Info().current_h
 print(MAX_WIN_WIDTH, MAX_WIN_HEIGHT)
 MINSQSIZE = 16  # the original minesweeper square size is around 16
@@ -35,7 +36,7 @@ EXPERT = (16, 30, 99)
 MODES = [['E', EASY],
          ['M', MEDIUM],
          ['H', EXPERT]]
-MAX_ROWS, MAX_COLS = 40, 70
+MAX_ROWS, MAX_COLS = 35, 60  # change this to fit max win width win height
 
 #  some shader thingy
 SHADOW_COLOUR = "black"
@@ -52,6 +53,11 @@ LOWER_CELL_IMG = pygame.transform.scale(pygame.image.load('assets/Sand_ 28textur
                                         (MINSQSIZE, MINSQSIZE))
 BUTTON_IMGS = [pygame.transform.scale(pygame.image.load('assets/mc_generalised_button.png'), (40, 36)),
                pygame.transform.scale(pygame.image.load('assets/mc_generalised_button_hover.png'), (40, 36))]
+# animations
+EXPLOSIONS = []
+for i in range(15):
+    EXPLOSIONS.append(pygame.transform.scale(
+        pygame.image.load(f"assets/explosion/explosion_{i+1}.png"), (MINSQSIZE*3, MINSQSIZE*3)))
 
 # fonts
 BOLD_FONT = pygame.font.Font('assets/MinecraftBold-nMK1.ttf', int(MINSQSIZE))
@@ -59,17 +65,14 @@ NUM_FONT = pygame.font.Font('assets/MinecraftRegular-Bmg3.ttf', int(MINSQSIZE))
 SIDEBAR_FONT = pygame.font.Font('assets/MinecraftRegular-Bmg3.ttf', 22)  # pls make the pixel size consistent
 SETTINGS_FONT_SIZE = 22
 SETTINGS_FONT = pygame.font.Font('assets/MinecraftRegular-Bmg3.ttf', SETTINGS_FONT_SIZE)
+SMALL_FONT_SIZE = 16
+SMALL_FONT = pygame.font.Font('assets/MinecraftRegular-Bmg3.ttf', SMALL_FONT_SIZE)
 
 NUM_COLOURS = {1: "blue", 2: "darkgreen", 3: "red", 4: "darkblue", 5: "darkred", 6: "darkcyan", 7: "black",
                8: "dimgray"}
 
 # audio
-DIGSOUNDS = []
-for sound in ('sand1.ogg', 'sand2.ogg', 'sand3.ogg'):
-    DIGSOUNDS.append(pygame.mixer.Sound("assets/" + sound))
-
-FLAGSOUNDS = []
-for sound in ('wood1.ogg', 'wood2.ogg', 'wood3.ogg', 'wood4.ogg'):
-    FLAGSOUNDS.append(pygame.mixer.Sound("assets/" + sound))
-
-CLICKSOUND = pygame.mixer.Sound("assets/click.ogg")
+CLICK_SOUND = pygame.mixer.Sound("assets/click.ogg")
+DIG_SOUNDS = [pygame.mixer.Sound(f"assets/sand{i + 1}.ogg") for i in range(3)]
+EXPLODE_SOUNDS = [pygame.mixer.Sound(f"assets/explode{i+1}.ogg") for i in range(4)]
+FLAG_SOUNDS = [pygame.mixer.Sound(f"assets/wood{i + 1}.ogg") for i in range(4)]

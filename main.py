@@ -1,4 +1,6 @@
-# the versioning is ruined
+# the versioning is a bit ruined
+import time
+
 import pygame.time
 from pygame import QUIT, KEYDOWN, MOUSEBUTTONDOWN
 from Minesweeper.states import *
@@ -23,7 +25,7 @@ class Game:
 
         self.events = ()
         self.settings = Settings(self)
-
+        self.mousepos = (0, 0)
         """try:
             self.current_states = user_data["last_saved"]
             self.reset(last_saved=True)
@@ -49,9 +51,14 @@ class Game:
         self.win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
         self.face_button = ButtonMC(self, text=IDLE_FACE)
 
+
+
     def game_loop(self):
+        prev_time = time.time()
         while self.playing:
-            self.clock.tick(FPS)
+            self.dt = time.time() - prev_time
+            prev_time = time.time()
+
             self.events = pygame.event.get()
             for e in self.events:
                 if e.type == QUIT:
@@ -62,12 +69,12 @@ class Game:
                     if e.key in RESETBUTTON:
                         self.reset()
                 if e.type == MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
-                    mousepos = pygame.mouse.get_pos()
-                    if self.face_button.rect.collidepoint(mousepos):
-                        CLICKSOUND.play()
+                    self.mousepos = pygame.mouse.get_pos()
+                    if self.face_button.rect.collidepoint(self.mousepos):
+                        CLICK_SOUND.play()
                         self.reset()
-                    if self.settings.settingsbutton.rect.collidepoint(mousepos):
-                        CLICKSOUND.play()
+                    if self.settings.settingsbutton.rect.collidepoint(self.mousepos):
+                        CLICK_SOUND.play()
                         self.settings.open_close()
 
             # rendering
@@ -75,6 +82,8 @@ class Game:
             self.settings.update(self.events)
             self.current_states[-1].update(self.events)  # majority of input managed here
             pygame.display.update()
+
+            self.clock.tick(FPS)
 
 
 game = Game()

@@ -4,10 +4,7 @@ from .constants import *
 import random
 from queue import Queue
 
-mine = -1
 
-
-# probably make a class for the cells?
 class Grid:
     sqsize = MINSQSIZE
 
@@ -129,7 +126,7 @@ class Grid:
             return
         self.field[row][col].revealed = True
         if not pygame.mixer.get_busy():
-            DIGSOUNDS[random.randint(0, len(DIGSOUNDS) - 1)].play()
+            DIG_SOUNDS[random.randint(0, len(DIG_SOUNDS) - 1)].play()
         if underfield.field[row][col].indicator > 0:
             return  # if the revealed cell is a number, just reveal that one
         elif underfield.field[row][col].mine:
@@ -169,13 +166,13 @@ class Grid:
         else:
             self.field[row][col].flagged = True
             self.game.counters.flag_count -= 1
-        FLAGSOUNDS[random.randint(0, len(FLAGSOUNDS)-1)].play()
+        FLAG_SOUNDS[random.randint(0, len(FLAG_SOUNDS) - 1)].play()
 
     # draws the lower layer
     def under_draw_iterate_cells(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                self.draw_checkerboard_cell(row, col, "white", "gray96", LOWER_CELL_IMG)
+                self.draw_checkerboard_cell(row, col, "white", "white", self.field[row][col].lower_img)
                 # so highlighting doesn't reveal the numbers
                 if self.field[row][col].revealed:
                     self.draw_number(row, col)
@@ -194,7 +191,6 @@ class Grid:
                 if self.field[row][col].mine:
                     self.win.blit(MINE_IMG, (col * self.sqsize + (self.sqsize - MINE_IMG.get_width()) / 2,
                                              row * self.sqsize + (self.sqsize - MINE_IMG.get_height()) / 2))
-        print("mines drawn")
 
     def draw_shadows(self):  # very simple shadows...
         def draw_shadow():
@@ -214,9 +210,9 @@ class Grid:
         for row in range(self.rows):
             for col in range(self.cols):
                 if not self.field[row][col].revealed and not self.field[row][col].highlighted:  # so highlighed looks like revealed
-                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", COVER_IMG)
+                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", self.field[row][col].cover_img)
                 elif self.field[row][col].highlighted and self.field[row][col].flagged:
-                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", COVER_IMG)
+                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", self.field[row][col].cover_img)
                 self.draw_data(row, col)
 
     def draw_data(self, row, col):

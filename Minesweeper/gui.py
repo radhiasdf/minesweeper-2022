@@ -1,4 +1,4 @@
-import pygame
+# i definitely need to fundamentally change how the gui works calculating the positions so the buttons etc are flexibly arranged one after another
 
 from .constants import *
 import time
@@ -96,7 +96,6 @@ class Settings:
     def __init__(self, game):
         self.game = game
         self.is_open = False
-        self.selectedbox_id = None
         self.buttons = []
         self.settingsbutton = ButtonMC(game, text='S')
         # default mode buttons
@@ -110,6 +109,9 @@ class Settings:
         self.textboxes = []
         for _ in range(len(PARAMETERS)):
             self.textboxes.append(TextInputBox(self.game.win))
+        self.textboxes[0].text = str(self.game.num_rows)
+        self.textboxes[1].text = str(self.game.num_cols)
+        self.textboxes[2].text = str(self.game.num_mines)
         # enter button for user inputted row col mines
         self.enterbutton = ButtonMC(game, text=ENTER_SYM)
         self.buttons.append(self.enterbutton)
@@ -129,18 +131,35 @@ class Settings:
                                           (self.game.win_height - SIDEBAR_HEIGHT) + (SIDEBAR_HEIGHT / 2),
                                           ycentred=True)
         if self.is_open:
+            try:
+                rows = int(self.textboxes[0].text)
+                if rows > MAX_ROWS:
+                    rows = MAX_ROWS
+                    self.textboxes[0].text = str(rows)
+            except: pass
+            try:
+                cols = int(self.textboxes[1].text)
+                if cols > MAX_COLS:
+                    cols = MAX_COLS
+                    self.textboxes[1].text = str(cols)
+            except: pass
+            try:
+                mines = int(self.textboxes[2].text)
+                if mines > rows * cols:
+                    mines = rows * cols
+                    self.textboxes[2].text = str(mines)
+            except: pass
+
             for e in events:
                 if e.type == pygame.MOUSEBUTTONDOWN:
-                    for i in range(
-                            len(self.textboxes)):  # 6/10/2022 there was a bug where only the last textbox cant be set to true, this is bc teh for loop resets them to unselected except at the end
+                    for i in range(len(self.textboxes)):  # 6/10/2022 there was a bug where only the last textbox cant be set to true, this is bc teh for loop resets them to unselected except at the end
                         if self.textboxes[i].rect.collidepoint(mousepos):
                             self.textboxes[i].selected = True
-                            self.selectedbox_id = i
                         else:
                             self.textboxes[i].selected = False
                     for i in range(len(self.buttons)):
                         if self.buttons[i].rect.collidepoint(mousepos):
-                            CLICKSOUND.play()
+                            CLICK_SOUND.play()
                             # sets textbox texts into the clicked default mode
                             for j in range(len(MODES)):
                                 if self.buttons[i].set_text == MODES[j][0]:
@@ -148,15 +167,6 @@ class Settings:
                                         self.textboxes[k].text = str(MODES[j][1][k])
                             # parameters for the grid are set
                             if self.buttons[i].set_text == ENTER_SYM:
-                                rows = int(self.textboxes[0].text)
-                                cols = int(self.textboxes[1].text)
-                                mines = int(self.textboxes[2].text)
-                                if rows > MAX_ROWS:
-                                    rows = MAX_ROWS
-                                if cols > MAX_COLS:
-                                    cols = MAX_COLS
-                                if mines > rows*cols:
-                                    mines = rows*cols
                                 try:
                                     self.game.num_rows = rows
                                     self.game.num_cols = cols
@@ -183,6 +193,18 @@ class Settings:
                                            self.textboxes[-1].rect.y)
 
             for i in range(len(self.textboxes)):
-                self.textboxes[i].draw(i * (TEXTBOX_WIDTH + GUI_PADDING) + GUI_PADDING + self.game.win_width,
-                                       self.buttons[0].texture.get_height() + SETTINGS_FONT_SIZE * 2, TEXTBOX_WIDTH,
-                                       SETTINGS_FONT_SIZE * 1.5)
+                # rendering textboxes, their ypos coded to come after buttons plus their row col mines title
+                xpos = i * (TEXTBOX_WIDTH + GUI_PADDING) + GUI_PADDING + self.game.win_width
+                ypos = self.buttons[0].texture.get_height() + SMALL_FONT_SIZE * 2
+                self.textboxes[i].draw(xpos, ypos, TEXTBOX_WIDTH, SETTINGS_FONT_SIZE * 1.5)
+                # word describing what each textbox is for
+                rendered_text = SMALL_FONT.render(str(PARAMETERS[i]), True, 'gray70')
+                self.game.win.blit(rendered_text, (xpos + 2, ypos - self.textboxes[i].rect.h/2 - 2))
+            # mine frequency indicator
+            try:
+                rarity = str(round((rows * cols)/mines, 1))
+                rendered_text = SMALL_FONT.render("1 mine every " + rarity + " squares", True, 'gray70')
+                self.game.win.blit(rendered_text, (self.game.win_width + GUI_PADDING, self.buttons[0].texture.get_height() + SMALL_FONT_SIZE*2 + SETTINGS_FONT_SIZE * 1.5 + 2))
+            except:
+                pass
+
