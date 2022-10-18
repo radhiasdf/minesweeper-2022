@@ -3,7 +3,7 @@ from .cells import *
 from .constants import *
 import random
 from queue import Queue
-
+import math
 
 class Grid:
     sqsize = MINSQSIZE
@@ -47,6 +47,16 @@ class Grid:
             surrounding.append((row + 1, col - 1))  # bottom left
         if row < self.rows - 1 and col < self.cols - 1:
             surrounding.append((row + 1, col + 1))  # bottom right
+        return surrounding
+
+    def get_cells_in_circle(self, centre_row, centre_col, radius):
+        surrounding = []
+        for row in range(int(centre_row - radius), int(centre_row + radius)):
+            for col in range(int(centre_col - radius), int(centre_col + radius)):
+                # some pythagoras
+                if math.sqrt((centre_row - row)**2 + (centre_col - col)**2) < radius:
+                    if row in range(self.rows) and col in range(self.cols):
+                            surrounding.append((row, col))
         return surrounding
 
     # generates mines and number indicators
@@ -121,15 +131,15 @@ class Grid:
                     self.field[row][col].highlighted = False
 
     # revealing the cover field from the cell clicked
-    def reveal(self, row, col, underfield, mousepressed):
+    def reveal(self, row, col):
         if self.field[row][col].flagged or self.field[row][col].revealed:  # click has no effect on flagged cell
             return
         self.field[row][col].revealed = True
         if not pygame.mixer.get_busy():
             DIG_SOUNDS[random.randint(0, len(DIG_SOUNDS) - 1)].play()
-        if underfield.field[row][col].indicator > 0:
+        if self.field[row][col].indicator > 0:
             return  # if the revealed cell is a number, just reveal that one
-        elif underfield.field[row][col].mine:
+        elif self.field[row][col].mine:
             return "gameover"
 
         # pathfinding and revealing all 0s and numbers adjacent
@@ -145,17 +155,18 @@ class Grid:
                     continue
                 if self.field[r][c].flagged:
                     continue
-                if underfield.field[r][c].indicator >= 0:
+                if self.field[r][c].indicator >= 0:
                     found.add((r, c))
-                    if underfield.field[r][c].indicator == 0:
+                    if self.field[r][c].indicator == 0:
                         q.put((r, c))
                     self.field[r][c].revealed = True
 
-    def reveal_cells_over_mines(self):
+    # draws holes where the mines were. layer 2 means 2 layers under. sand is totally obviously invincible
+    """def layer2_draw(self):
         for row in range(self.rows):
             for col in range(self.cols):
                 if self.field[row][col].mine:
-                    self.field[row][col].revealed = True
+                    self.field[row][col].revealed = True"""
 
     def editflag(self, row, col):
         if self.field[row][col].revealed:

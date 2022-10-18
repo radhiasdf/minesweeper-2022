@@ -38,8 +38,9 @@ class StartPlaying(State):
         to_be_highlighted = []
 
         # assigning xy position to grid
-        m_row = int(self.mousepos[1] / self.field.sqsize)
-        m_col = int(self.mousepos[0] / self.field.sqsize)
+        self.game.m_row = int(self.mousepos[1] / self.field.sqsize)
+        self.game.m_col = int(self.mousepos[0] / self.field.sqsize)
+        m_row, m_col = self.game.m_row, self.game.m_col
 
         # highlighting cell(s) that are pressed but not mouse up
         self.field.highlight_update2(m_row, m_col, self.mousepressed)
@@ -53,7 +54,7 @@ class StartPlaying(State):
         for e in events:
             # if mouse is in grid
             if 0 <= m_row < self.game.num_rows and 0 <= m_col < self.game.num_cols:
-                # the instant the mouse is pressed down, not continuous
+                # the data is of the instant the mouse is pressed down and doesnt continuously change
                 if e.type == pygame.MOUSEBUTTONDOWN:
                     # again, specifically for storing which button would later be released
                     self.mpressed_at_mdown = self.mousepressed
@@ -65,7 +66,7 @@ class StartPlaying(State):
                 # generates data if clicking the first time and reveals cells every click on a covered cell + check gameover
                 if e.type == pygame.MOUSEBUTTONUP:
                     print(f'mouse button up, {self.mpressed_at_mdown}')
-                    # aha! self.mousepressed was constantly resetting every frame so field cant be revealed
+                    # aha! self.mousepressed was constantly resetting every frame so field cant be revealed. the solution is storing which mousebuttons down only at the instant its pressed
 
                     if self.mpressed_at_mdown[0] and not self.mpressed_at_mdown[2]:
 
@@ -74,11 +75,11 @@ class StartPlaying(State):
                             self.data_generated = True
                             # starts stopwatch
                             self.game.counters.reset_stopwatch()
-                        if self.field.reveal(m_row, m_col, self.field, self.mousepressed) == "gameover":
+                        if self.field.reveal(m_row, m_col) == "gameover":
                             self.gameover = True
-                        # calling method to reveal cells + losing
-                        # chord clicks, checking if the indicator matches the number of flags put around so it reveals
 
+                    # calling method to reveal cells + losing
+                    # chord clicks, checking if the indicator matches the number of flags put around so it reveals
                     if self.mpressed_at_mdown[0] and self.mpressed_at_mdown[2] and self.data_generated and self.field.field[m_row][m_col].revealed:
                         num_flagged = 0
                         surrounding = self.field.get_surrounding(m_row, m_col)
@@ -87,9 +88,9 @@ class StartPlaying(State):
                                 num_flagged += 1
                         if num_flagged == self.field.field[m_row][m_col].indicator:
                             for r, c in surrounding:
-                                if self.field.reveal(r, c, self.field, self.mousepressed) == "gameover":
+                                if self.field.reveal(r, c) == "gameover":
                                     self.gameover = True
-                            if self.field.reveal(m_row, m_col, self.field, self.mousepressed) == "gameover":
+                            if self.field.reveal(m_row, m_col) == "gameover":
                                 self.gameover = True
 
                     # losing
@@ -115,9 +116,6 @@ class StartPlaying(State):
     def render(self):
         # rendering
         self.field.under_draw_iterate_cells()
-        if self.gameover:
-            self.field.draw_mines()
-            self.field.reveal_cells_over_mines()
         self.field.draw_shadows()
         self.field.cover_draw_iterate_cells()
         self.game.face_button.update_n_draw(self.game.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
@@ -137,14 +135,21 @@ class WinYay(State):
 class Lose(State):
     def __init__(self, game):
         super().__init__(game)
-        EXPLODE_SOUNDS[random.randint(0, len(EXPLODE_SOUNDS)-1)].play()
-        self.explosion = BoomAnimator(game)
-        print('llllooose')
+        self.game.explosions = []
+        self.game.explosions.append(Explosion(game, self.game.m_row, self.game.m_col, first_mine=True))
+
 
     def update(self, events):  # do animations or smt
-        self.game.current_states[-2].render()
-        self.explosion.update()
-
-
-
+        # rendering
+        #self.game.field.layer2_draw()
+        self.game.field.under_draw_iterate_cells()
+        self.game.field.draw_mines()
+        self.game.field.draw_shadows()
+        for explosion in self.game.explosions:
+            explosion.update()
+        self.game.field.cover_draw_iterate_cells()
+        self.game.face_button.update_n_draw(self.game.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
+                                            (self.game.win_height - SIDEBAR_HEIGHT) + (SIDEBAR_HEIGHT / 2),
+                                            ycentred=True, text=LOSE_FACE)
+        self.game.counters.update_n_render()
 

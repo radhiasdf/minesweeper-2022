@@ -76,3 +76,5 @@ CLICK_SOUND = pygame.mixer.Sound("assets/click.ogg")
 DIG_SOUNDS = [pygame.mixer.Sound(f"assets/sand{i + 1}.ogg") for i in range(3)]
 EXPLODE_SOUNDS = [pygame.mixer.Sound(f"assets/explode{i+1}.ogg") for i in range(4)]
 FLAG_SOUNDS = [pygame.mixer.Sound(f"assets/wood{i + 1}.ogg") for i in range(4)]
+
+EXPLODE_RADIUS = 4
