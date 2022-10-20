@@ -1,47 +1,45 @@
 import random
 import pygame.surface
-from Minesweeper.constants import EXPLOSIONS, MINSQSIZE, EXPLODE_RADIUS, EXPLODE_SOUNDS, MINE_IMG
+from Minesweeper.constants import EXPLOSIONS, MINSQSIZE, EXPLODE_RADIUS, EXPLODE_SOUNDS, MINE_IMG, MINE_IMG_BRIGHT, changeColour
+radiusInPixels = (EXPLODE_RADIUS - 1) * MINSQSIZE
 
-
-#  masks the image to a different colour
-def changeColour(image, colour, special_flags=pygame.BLEND_MULT):
-    colouredImage = pygame.Surface(image.get_size())
-    colouredImage.fill(colour)
-
-    finalImage = image.copy()
-    finalImage.blit(colouredImage, (0, 0), special_flags=special_flags)
-    print('hello')
-    return finalImage
-
-
+# maybe to reduce lag
+def get_square_size(square_size):
+    global sqsize
+    global mine_img
+    global mine_img_bright
+    sqsize = int(square_size)
+    mine_img = pygame.transform.scale(MINE_IMG, (sqsize, sqsize))
+    mine_img_bright = pygame.transform.scale(MINE_IMG_BRIGHT, (sqsize, sqsize))
 class Explosion:
     def __init__(self, game, centre_r, centre_c, first_mine=False):
         self.game = game
-        self.ypos = centre_r * MINSQSIZE
-        self.xpos = centre_c * MINSQSIZE
         self.centre_r = centre_r
         self.centre_c = centre_c
+        self.xpos = self.centre_c * sqsize + self.game.field.xpos
+        self.ypos = self.centre_r * sqsize + self.game.field.ypos
         self.game.field.field[self.centre_r][self.centre_c].mine = False  # to prevent duplicate mine triggering
         self.flashToggle = True
         self.particles = []
         if first_mine:
             self.numParticles = 20  # constant
             self.pSpawnInterval = 1 / 60  # in seconds
+            self.fuseTime = 0.7
         else:
             self.numParticles = 1
             self.pSpawnInterval = 1 / 10
-        self.fuseTime = 1
+            self.fuseTime = 120/103.9  # to make it in sync with the music #random.randint(5,15)/10
         self.flashInterval = 0.2
         self.fusing = True
         self.timer = 0
         self.timer2 = 0
         # radius decreased by one square so the particles rnt so off the edge. also random randint is in range of
         # pixels, not cells, so the particle places r more random
-        self.radiusInPixels = (EXPLODE_RADIUS - 1) * MINSQSIZE
+
 
     def update(self):
         if self.fusing:
-            self.draw_mine()
+            self.draw_mine(self.xpos, self.ypos)
             self.timer += self.game.dt
             self.timer2 += self.game.dt
             if self.timer2 >= self.flashInterval:
@@ -65,10 +63,7 @@ class Explosion:
         if len(self.particles) < self.numParticles:
             self.timer += self.game.dt
             if self.timer >= self.pSpawnInterval:
-                self.particles.append(
-                    ExplosionParticle(self.game, self.xpos + random.randint(-self.radiusInPixels, self.radiusInPixels),
-                                      self.ypos + random.randint(-self.radiusInPixels, self.radiusInPixels)))
-                # self.particles.append(ExplosionParticle(self.game, self.xpos, self.ypos))
+                self.particles.append(ExplosionParticle(self.game, self.xpos, self.ypos))
                 self.timer = 0
         # iterating through the images
         for p in self.particles:
@@ -78,23 +73,26 @@ class Explosion:
             else:
                 p.update()
 
-    def draw_mine(self):
+    def draw_mine(self, xpos, ypos):
         if self.flashToggle:
-            image = changeColour(MINE_IMG, "white", special_flags=pygame.BLEND_ALPHA_SDL2)
-        else: image = MINE_IMG
-        self.game.win.blit(image, (self.centre_c * MINSQSIZE + (MINSQSIZE - MINE_IMG.get_width()) / 2,
-                                      self.centre_r * MINSQSIZE + (MINSQSIZE - MINE_IMG.get_height()) / 2))
+            image = mine_img_bright
+        else: image = mine_img
+        self.game.win.blit(image, (xpos, ypos))
 
 
 class ExplosionParticle:
     # the location of each particle is randomly determined by boom animator
-    def __init__(self, game, x, y):
+    def __init__(self, game, xpos, ypos):
         self.animationSpeed = 60
         self.frameIndex = 0
         self.game = game
-        self.x, self.y = x, y
+        self.xpos = xpos
+        self.ypos = ypos
         self.colour = f"gray{random.randint(50, 100)}"
+        self.randomXOffset = random.randint(-radiusInPixels, radiusInPixels)
+        self.randomYOffset = random.randint(-radiusInPixels, radiusInPixels)
 
     def update(self):
-        image = changeColour(EXPLOSIONS[int(self.frameIndex)], self.colour)
-        self.game.win.blit(image, (self.x, self.y))
+        self.image = changeColour(EXPLOSIONS[int(self.frameIndex)], self.colour)
+        self.game.win.blit(self.image, (self.xpos + self.randomXOffset,
+                                        self.ypos + self.randomYOffset))

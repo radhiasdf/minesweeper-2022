@@ -53,12 +53,11 @@ class Counters:
 
         text = SIDEBAR_FONT.render(str(self.stopwatch), True, "white")
         self.game.win.blit(text, (self.game.win_width - text.get_width() - COUNTER_PADDING,
-                                  self.game.win_height - SIDEBAR_HEIGHT + (SIDEBAR_HEIGHT - text.get_height()) / 2))
+                                  (SIDEBAR_HEIGHT - text.get_height()) / 2))
 
         # flag count
         text = SIDEBAR_FONT.render(str(self.flag_count), True, "white")
-        self.game.win.blit(text, (
-            COUNTER_PADDING, self.game.win_height - SIDEBAR_HEIGHT + (SIDEBAR_HEIGHT - text.get_height()) / 2))
+        self.game.win.blit(text, (COUNTER_PADDING, (SIDEBAR_HEIGHT - text.get_height()) / 2))
 
 
 # for inputting customised row col and mines
@@ -128,7 +127,7 @@ class Settings:
         mousepos = pygame.mouse.get_pos()
 
         self.settingsbutton.update_n_draw(self.game.win_width / 2 + BUTTON_SPACING,
-                                          (self.game.win_height - SIDEBAR_HEIGHT) + (SIDEBAR_HEIGHT / 2),
+                                          (SIDEBAR_HEIGHT / 2),
                                           ycentred=True)
         if self.is_open:
             try:
@@ -192,11 +191,16 @@ class Settings:
             self.enterbutton.update_n_draw(self.textboxes[-1].rect.x + self.textboxes[-1].rect.width + GUI_PADDING,
                                            self.textboxes[-1].rect.y)
 
+            # rendering textboxes, their ypos coded to come after buttons plus their row col mines title
             for i in range(len(self.textboxes)):
-                # rendering textboxes, their ypos coded to come after buttons plus their row col mines title
                 xpos = i * (TEXTBOX_WIDTH + GUI_PADDING) + GUI_PADDING + self.game.win_width
-                ypos = self.buttons[0].texture.get_height() + SMALL_FONT_SIZE * 2
-                self.textboxes[i].draw(xpos, ypos, TEXTBOX_WIDTH, SETTINGS_FONT_SIZE * 1.5)
+                ypos = self.buttons[0].texture.get_height() + SMALL_FONT.get_height() * 2
+
+                # the mines textbox is slightly wider
+                textbox_width = TEXTBOX_WIDTH
+                if i == 2: textbox_width = TEXTBOX_WIDTH + SETTINGS_FONT.get_height()
+                self.textboxes[i].draw(xpos, ypos, textbox_width, SETTINGS_FONT.get_height() * 1.5)
+
                 # word describing what each textbox is for
                 rendered_text = SMALL_FONT.render(str(PARAMETERS[i]), True, 'gray70')
                 self.game.win.blit(rendered_text, (xpos + 2, ypos - self.textboxes[i].rect.h/2 - 2))
@@ -204,7 +208,7 @@ class Settings:
             try:
                 rarity = str(round((rows * cols)/mines, 1))
                 rendered_text = SMALL_FONT.render("1 mine every " + rarity + " squares", True, 'gray70')
-                self.game.win.blit(rendered_text, (self.game.win_width + GUI_PADDING, self.buttons[0].texture.get_height() + SMALL_FONT_SIZE*2 + SETTINGS_FONT_SIZE * 1.5 + 2))
+                self.game.win.blit(rendered_text, (self.game.win_width + GUI_PADDING, self.buttons[0].texture.get_height() + SMALL_FONT.get_height()*2 + SETTINGS_FONT.get_height() * 1.5 + 2))
             except:
                 pass
 

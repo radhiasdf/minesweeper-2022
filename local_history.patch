@@ -1,0 +1,426 @@
+Index: main.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/main.py b/main.py
+--- a/main.py	
++++ b/main.py	(date 1666229100142)
+@@ -50,6 +50,11 @@
+         # todo: make window resizing more flexible
+         self.win_width, self.win_height = MINSQSIZE * width, MINSQSIZE * height + SIDEBAR_HEIGHT
+         self.win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
++        if self.win_width > MAX_WIN_WIDTH:
++            self.win_width = MAX_WIN_WIDTH
++        if self.win_height == MAX_WIN_HEIGHT:
++            self.win_height = MAX_WIN_HEIGHT
++
+         self.face_button = ButtonMC(self, text=IDLE_FACE)
+ 
+ 
+@@ -98,8 +103,8 @@
+ 
+                             # rendering
+             self.win.fill(BG_COLOUR)
+-            self.settings.update(self.events)
+             self.current_states[-1].update(self.events)  # majority of input managed here
++            self.settings.update(self.events)
+             pygame.display.update()
+ 
+             self.clock.tick(FPS)
+Index: Minesweeper/gui.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Minesweeper/gui.py b/Minesweeper/gui.py
+--- a/Minesweeper/gui.py	
++++ b/Minesweeper/gui.py	(date 1666240792362)
+@@ -53,12 +53,11 @@
+ 
+         text = SIDEBAR_FONT.render(str(self.stopwatch), True, "white")
+         self.game.win.blit(text, (self.game.win_width - text.get_width() - COUNTER_PADDING,
+-                                  self.game.win_height - SIDEBAR_HEIGHT + (SIDEBAR_HEIGHT - text.get_height()) / 2))
++                                  (SIDEBAR_HEIGHT - text.get_height()) / 2))
+ 
+         # flag count
+         text = SIDEBAR_FONT.render(str(self.flag_count), True, "white")
+-        self.game.win.blit(text, (
+-            COUNTER_PADDING, self.game.win_height - SIDEBAR_HEIGHT + (SIDEBAR_HEIGHT - text.get_height()) / 2))
++        self.game.win.blit(text, (COUNTER_PADDING, (SIDEBAR_HEIGHT - text.get_height()) / 2))
+ 
+ 
+ # for inputting customised row col and mines
+@@ -128,7 +127,7 @@
+         mousepos = pygame.mouse.get_pos()
+ 
+         self.settingsbutton.update_n_draw(self.game.win_width / 2 + BUTTON_SPACING,
+-                                          (self.game.win_height - SIDEBAR_HEIGHT) + (SIDEBAR_HEIGHT / 2),
++                                          (SIDEBAR_HEIGHT / 2),
+                                           ycentred=True)
+         if self.is_open:
+             try:
+@@ -192,11 +191,16 @@
+             self.enterbutton.update_n_draw(self.textboxes[-1].rect.x + self.textboxes[-1].rect.width + GUI_PADDING,
+                                            self.textboxes[-1].rect.y)
+ 
+-            for i in range(len(self.textboxes)):
+-                # rendering textboxes, their ypos coded to come after buttons plus their row col mines title
++            # rendering textboxes, their ypos coded to come after buttons plus their row col mines title
++            for i in range(len(self.textboxes)):
+                 xpos = i * (TEXTBOX_WIDTH + GUI_PADDING) + GUI_PADDING + self.game.win_width
+-                ypos = self.buttons[0].texture.get_height() + SMALL_FONT_SIZE * 2
+-                self.textboxes[i].draw(xpos, ypos, TEXTBOX_WIDTH, SETTINGS_FONT_SIZE * 1.5)
++                ypos = self.buttons[0].texture.get_height() + SMALL_FONT.get_height() * 2
++
++                # the mines textbox is slightly wider
++                textbox_width = TEXTBOX_WIDTH
++                if i == 2: textbox_width = TEXTBOX_WIDTH + SETTINGS_FONT.get_height()
++                self.textboxes[i].draw(xpos, ypos, textbox_width, SETTINGS_FONT.get_height() * 1.5)
++
+                 # word describing what each textbox is for
+                 rendered_text = SMALL_FONT.render(str(PARAMETERS[i]), True, 'gray70')
+                 self.game.win.blit(rendered_text, (xpos + 2, ypos - self.textboxes[i].rect.h/2 - 2))
+@@ -204,7 +208,7 @@
+             try:
+                 rarity = str(round((rows * cols)/mines, 1))
+                 rendered_text = SMALL_FONT.render("1 mine every " + rarity + " squares", True, 'gray70')
+-                self.game.win.blit(rendered_text, (self.game.win_width + GUI_PADDING, self.buttons[0].texture.get_height() + SMALL_FONT_SIZE*2 + SETTINGS_FONT_SIZE * 1.5 + 2))
++                self.game.win.blit(rendered_text, (self.game.win_width + GUI_PADDING, self.buttons[0].texture.get_height() + SMALL_FONT.get_height()*2 + SETTINGS_FONT.get_height() * 1.5 + 2))
+             except:
+                 pass
+ 
+Index: Minesweeper/grid.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Minesweeper/grid.py b/Minesweeper/grid.py
+--- a/Minesweeper/grid.py	
++++ b/Minesweeper/grid.py	(date 1666241280570)
+@@ -6,7 +6,6 @@
+ import math
+ 
+ class Grid:
+-    sqsize = MINSQSIZE
+ 
+     def __init__(self, win, setcols, setrows, game):
+         self.game = game
+@@ -18,6 +17,7 @@
+         self.ypos = GRIDYPOS
+         self.num_mines = 0
+         self.start_time = pygame.time.get_ticks()
++        self.sqsize = MINSQSIZE
+ 
+         print(self.field)
+ 
+@@ -185,7 +185,7 @@
+     def under_draw_iterate_cells(self):
+         for row in range(self.rows):
+             for col in range(self.cols):
+-                self.draw_checkerboard_cell(row, col, "white", "white", self.field[row][col].lower_img)
++                self.draw_checkerboard_cell(row, col, "white", "white", pygame.transform.scale(self.field[row][col].lower_img, (self.sqsize, self.sqsize)))
+                 # so highlighting doesn't reveal the numbers
+                 if self.field[row][col].revealed:
+                     self.draw_number(row, col)
+@@ -193,15 +193,14 @@
+     # draws every indicator number with their respective colours
+     def draw_number(self, row, col):
+         if self.field[row][col].indicator > 0:
+-            text = NUM_FONT.render(str(self.field[row][col].indicator), True, NUM_COLOURS[
+-                self.field[row][col].indicator])  # to make them centered; there should be a simpler way
++            text = pygame.font.Font(DEFAULT_FONT, int(self.sqsize)).render(str(self.field[row][col].indicator), True, NUM_COLOURS[self.field[row][col].indicator])
+             self.win.blit(text, (col * self.sqsize + self.xpos + (self.sqsize - text.get_width()) / 2,
+                                  row * self.sqsize + self.ypos + (self.sqsize - text.get_height()) / 2))
+ 
+     def draw_shadows(self):  # very simple shadows...
+         def draw_shadow():
+-            pygame.draw.rect(self.win, SHADOW_COLOUR, (col * self.sqsize + self.xpos + THREE_D_OFFSET_X,
+-                                                       row * self.sqsize + self.ypos + THREE_D_OFFSET_Y,
++            pygame.draw.rect(self.win, SHADOW_COLOUR, (col * self.sqsize + self.xpos + THREE_D_OFFSET_X*(self.sqsize/MINSQSIZE),
++                                                       row * self.sqsize + self.ypos + THREE_D_OFFSET_Y*(self.sqsize/MINSQSIZE),
+                                                        self.sqsize, self.sqsize))
+         # not included in collective draw for loops bc the whole field needs to be shadowed first rather than per
+         # cell, so the next cell's shadow isn't blitted after the previous cell's cover
+@@ -216,22 +215,25 @@
+         for row in range(self.rows):
+             for col in range(self.cols):
+                 if not self.field[row][col].revealed and not self.field[row][col].highlighted:  # so highlighed looks like revealed
+-                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", self.field[row][col].cover_img)
++                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", pygame.transform.scale(self.field[row][col].cover_img, (self.sqsize, self.sqsize)))
+                 elif self.field[row][col].highlighted and self.field[row][col].flagged:
+-                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", self.field[row][col].cover_img)
++                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", pygame.transform.scale(self.field[row][col].cover_img, (self.sqsize, self.sqsize)))
+                 self.draw_data(row, col)
+ 
+     def draw_data(self, row, col):
+         # Draws flag for marked
+         if self.field[row][col].flagged:
+-            self.win.blit(SIGN_IMG, (col * self.sqsize + self.xpos + (self.sqsize - SIGN_IMG.get_width()) / 2,
+-                                     row * self.sqsize + self.ypos + (self.sqsize - SIGN_IMG.get_height()) / 2))
++            img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize))
++            self.win.blit(img, (col * self.sqsize + self.xpos + (self.sqsize - img.get_width()) / 2,
++                                row * self.sqsize + self.ypos + (self.sqsize - img.get_height()) / 2))
+ 
+     def update(self, actions):
+         # Get the direction from inputs
+         direction_x = actions["right"] - actions["left"]
+         direction_y = actions["down"] - actions["up"]
+         # Update the position
+-        self.xpos += GRID_MOVE_SPEED * self.game.dt * direction_x
+-        self.ypos += GRID_MOVE_SPEED * self.game.dt * direction_y
++        self.xpos -= GRID_MOVE_SPEED * self.game.dt * direction_x
++        self.ypos -= GRID_MOVE_SPEED * self.game.dt * direction_y
++
++
+ 
+Index: Minesweeper/states.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Minesweeper/states.py b/Minesweeper/states.py
+--- a/Minesweeper/states.py	
++++ b/Minesweeper/states.py	(date 1666243991644)
+@@ -111,6 +111,10 @@
+                             self.game.current_states.append(WinYay(self.game))
+ 
+                         self.clicks += 1
++                if e.type == pygame.MOUSEWHEEL:
++                    if e.y == 0:
++                        return
++                    self.field.sqsize = int(self.field.sqsize * (1.1 ** e.y))
+         self.field.update(self.game.actions)
+ 
+         self.render()
+@@ -121,7 +125,7 @@
+         self.field.draw_shadows()
+         self.field.cover_draw_iterate_cells()
+         self.game.face_button.update_n_draw(self.game.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
+-                                    (self.game.win_height - SIDEBAR_HEIGHT) + (SIDEBAR_HEIGHT / 2), ycentred=True, text=self.emoticon)
++                                    SIDEBAR_HEIGHT / 2, ycentred=True, text=self.emoticon)
+         self.game.counters.update_n_render()
+ 
+ 
+@@ -132,6 +136,8 @@
+     def update(self, events):
+         # previous state is still rendered
+         self.game.current_states[-2].render()
++        self.game.field.update(self.game.actions)
++
+ 
+ 
+ class Lose(State):
+@@ -139,11 +145,13 @@
+         super().__init__(game)
+         pygame.mixer.music.load(LOSE_MUSIC)
+         pygame.mixer.music.play(start=38.25)
++        get_square_size(self.game.field.sqsize)
+         self.game.explosions = []
+         self.game.explosions.append(Explosion(game, self.game.m_row, self.game.m_col, first_mine=True))
+ 
+ 
+     def update(self, events):  # do animations or smt
++
+         # rendering
+         #self.game.field.layer2_draw()
+         self.game.field.under_draw_iterate_cells()
+@@ -152,7 +160,6 @@
+         self.game.field.draw_shadows()
+         self.game.field.cover_draw_iterate_cells()
+         self.game.face_button.update_n_draw(self.game.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
+-                                            (self.game.win_height - SIDEBAR_HEIGHT) + (SIDEBAR_HEIGHT / 2),
+-                                            ycentred=True, text=LOSE_FACE)
++                                            SIDEBAR_HEIGHT / 2, ycentred=True, text=LOSE_FACE)
+         self.game.counters.update_n_render()
+ 
+Index: Minesweeper/constants.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Minesweeper/constants.py b/Minesweeper/constants.py
+--- a/Minesweeper/constants.py	
++++ b/Minesweeper/constants.py	(date 1666239181478)
+@@ -23,8 +23,7 @@
+ MINSQSIZE = 16  # the original minesweeper square size is around 16
+ SIDEBAR_HEIGHT = 50
+ GRIDXPOS = 5
+-GRIDYPOS = 5
+-SETTINGS_POS = ()
++GRIDYPOS = SIDEBAR_HEIGHT
+ SETTINGS_WIDTH = 250
+ BUTTON_SPACING = 0
+ GUI_PADDING = 5
+@@ -58,32 +57,26 @@
+ 
+ # images
+ ICON = pygame.transform.scale(pygame.image.load("assets/Birch_Sign_JE1_BE1.png"), (32, 32))
+-MINE_IMG = pygame.transform.scale(pygame.image.load('assets/TNT_ 28top_texture 29_JE2_BE2.png'), (MINSQSIZE, MINSQSIZE))
+-MINE_IMG_BRIGHT = changeColour(MINE_IMG, (255,255,255), special_flags=pygame.BLEND_RGB_ADD)
+-
+-
+-SIGN_IMG = pygame.transform.scale(pygame.image.load('assets/Birch_Sign_JE1_BE1.png'), (MINSQSIZE, MINSQSIZE))
+-COVER_IMG = pygame.transform.scale(pygame.image.load('assets/Grass_Block_29_JE4_BE2.png'), (MINSQSIZE, MINSQSIZE))
+-LOWER_CELL_IMG = pygame.transform.scale(pygame.image.load('assets/Sand_ 28texture 29_JE5_BE3.png'), (MINSQSIZE, MINSQSIZE))
+-"""for image in (SIGN_IMG, COVER_IMG, LOWER_CELL_IMG):
+-    image = pygame.transform.scale(image, (MINSQSIZE, MINSQSIZE))"""
+-
+ BUTTON_IMGS = [pygame.transform.scale(pygame.image.load('assets/mc_generalised_button.png'), (40, 36)),
+                pygame.transform.scale(pygame.image.load('assets/mc_generalised_button_hover.png'), (40, 36))]
++
++MINE_IMG = pygame.image.load('assets/TNT_ 28top_texture 29_JE2_BE2.png')
++MINE_IMG_BRIGHT = changeColour(MINE_IMG, (255,255,255), special_flags=pygame.BLEND_RGB_ADD)  # not perfect, i havent succeded in making a white overlay
++FLAG_IMG = pygame.image.load('assets/Birch_Sign_JE1_BE1.png')
++COVER_IMG = pygame.image.load('assets/Grass_Block_29_JE4_BE2.png')
++LOWER_CELL_IMG = pygame.image.load('assets/Sand_ 28texture 29_JE5_BE3.png')
++
+ # animations
+ EXPLOSIONS = []
+ for i in range(15):
+-    EXPLOSIONS.append(pygame.transform.scale(
+-        pygame.image.load(f"assets/explosion/explosion_{i+1}.png"), (MINSQSIZE*3, MINSQSIZE*3)))
++    EXPLOSIONS.append(pygame.image.load(f"assets/explosion/explosion_{i+1}.png"))
+ 
+ # fonts
+-BOLD_FONT = pygame.font.Font('assets/MinecraftBold-nMK1.ttf', int(MINSQSIZE))
+-NUM_FONT = pygame.font.Font('assets/MinecraftRegular-Bmg3.ttf', int(MINSQSIZE))
+-SIDEBAR_FONT = pygame.font.Font('assets/MinecraftRegular-Bmg3.ttf', 22)  # pls make the pixel size consistent
+-SETTINGS_FONT_SIZE = 22
+-SETTINGS_FONT = pygame.font.Font('assets/MinecraftRegular-Bmg3.ttf', SETTINGS_FONT_SIZE)
+-SMALL_FONT_SIZE = 16
+-SMALL_FONT = pygame.font.Font('assets/MinecraftRegular-Bmg3.ttf', SMALL_FONT_SIZE)
++BOLD_FONT = 'assets/MinecraftBold-nMK1.ttf'
++DEFAULT_FONT = 'assets/MinecraftRegular-Bmg3.ttf'
++SIDEBAR_FONT = pygame.font.Font(DEFAULT_FONT, 22)  # pls make the pixel size consistent
++SETTINGS_FONT = pygame.font.Font(DEFAULT_FONT, 22)
++SMALL_FONT = pygame.font.Font(DEFAULT_FONT, 16)
+ 
+ NUM_COLOURS = {1: "blue", 2: "darkgreen", 3: "red", 4: "darkblue", 5: "darkred", 6: "darkcyan", 7: "black",
+                8: "dimgray"}
+Index: Minesweeper/animations.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Minesweeper/animations.py b/Minesweeper/animations.py
+--- a/Minesweeper/animations.py	
++++ b/Minesweeper/animations.py	(date 1666243991659)
+@@ -1,21 +1,25 @@
+ import random
+ import pygame.surface
+ from Minesweeper.constants import EXPLOSIONS, MINSQSIZE, EXPLODE_RADIUS, EXPLODE_SOUNDS, MINE_IMG, MINE_IMG_BRIGHT, changeColour
+-
++radiusInPixels = (EXPLODE_RADIUS - 1) * MINSQSIZE
+ 
+-#  masks the image to a different colour
+-
+-
++# maybe to reduce lag
++def get_square_size(square_size):
++    global sqsize
++    global mine_img
++    global mine_img_bright
++    sqsize = int(square_size)
++    mine_img = pygame.transform.scale(MINE_IMG, (sqsize, sqsize))
++    mine_img_bright = pygame.transform.scale(MINE_IMG_BRIGHT, (sqsize, sqsize))
+ class Explosion:
+     def __init__(self, game, centre_r, centre_c, first_mine=False):
+         self.game = game
+-        self.ypos = centre_r * MINSQSIZE
+-        self.xpos = centre_c * MINSQSIZE
+         self.centre_r = centre_r
+         self.centre_c = centre_c
++        self.xpos = self.centre_c * sqsize + self.game.field.xpos
++        self.ypos = self.centre_r * sqsize + self.game.field.ypos
+         self.game.field.field[self.centre_r][self.centre_c].mine = False  # to prevent duplicate mine triggering
+         self.flashToggle = True
+-        self.mineSize = 1
+         self.particles = []
+         if first_mine:
+             self.numParticles = 20  # constant
+@@ -24,18 +28,18 @@
+         else:
+             self.numParticles = 1
+             self.pSpawnInterval = 1 / 10
+-            self.fuseTime = 120/105
++            self.fuseTime = 120/103.9  # to make it in sync with the music #random.randint(5,15)/10
+         self.flashInterval = 0.2
+         self.fusing = True
+         self.timer = 0
+         self.timer2 = 0
+         # radius decreased by one square so the particles rnt so off the edge. also random randint is in range of
+         # pixels, not cells, so the particle places r more random
+-        self.radiusInPixels = (EXPLODE_RADIUS - 1) * MINSQSIZE
++
+ 
+     def update(self):
+         if self.fusing:
+-            self.draw_mine()
++            self.draw_mine(self.xpos, self.ypos)
+             self.timer += self.game.dt
+             self.timer2 += self.game.dt
+             if self.timer2 >= self.flashInterval:
+@@ -59,10 +63,7 @@
+         if len(self.particles) < self.numParticles:
+             self.timer += self.game.dt
+             if self.timer >= self.pSpawnInterval:
+-                self.particles.append(
+-                    ExplosionParticle(self.game, self.xpos + random.randint(-self.radiusInPixels, self.radiusInPixels),
+-                                      self.ypos + random.randint(-self.radiusInPixels, self.radiusInPixels)))
+-                # self.particles.append(ExplosionParticle(self.game, self.xpos, self.ypos))
++                self.particles.append(ExplosionParticle(self.game, self.xpos, self.ypos))
+                 self.timer = 0
+         # iterating through the images
+         for p in self.particles:
+@@ -72,23 +73,26 @@
+             else:
+                 p.update()
+ 
+-    def draw_mine(self):
++    def draw_mine(self, xpos, ypos):
+         if self.flashToggle:
+-            image = MINE_IMG_BRIGHT
+-        else: image = MINE_IMG
+-        self.game.win.blit(image, (self.centre_c * MINSQSIZE + self.game.field.xpos + (MINSQSIZE - MINE_IMG.get_width()) / 2,
+-                                      self.centre_r * MINSQSIZE + self.game.field.ypos + (MINSQSIZE - MINE_IMG.get_height()) / 2))
++            image = mine_img_bright
++        else: image = mine_img
++        self.game.win.blit(image, (xpos, ypos))
+ 
+ 
+ class ExplosionParticle:
+     # the location of each particle is randomly determined by boom animator
+-    def __init__(self, game, x, y):
++    def __init__(self, game, xpos, ypos):
+         self.animationSpeed = 60
+         self.frameIndex = 0
+         self.game = game
+-        self.x, self.y = x, y
++        self.xpos = xpos
++        self.ypos = ypos
+         self.colour = f"gray{random.randint(50, 100)}"
++        self.randomXOffset = random.randint(-radiusInPixels, radiusInPixels)
++        self.randomYOffset = random.randint(-radiusInPixels, radiusInPixels)
+ 
+     def update(self):
+         self.image = changeColour(EXPLOSIONS[int(self.frameIndex)], self.colour)
+-        self.game.win.blit(self.image, (self.x, self.y))
++        self.game.win.blit(self.image, (self.xpos + self.randomXOffset,
++                                        self.ypos + self.randomYOffset))
+Index: Minesweeper/grid_20221005_1558.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Minesweeper/grid_20221005_1558.py b/Minesweeper/grid_20221005_1558.py
+--- a/Minesweeper/grid_20221005_1558.py	
++++ b/Minesweeper/grid_20221005_1558.py	(date 1666239181556)
+@@ -209,5 +209,5 @@
+     def draw_data(self, row, col):
+         # Draws flag for marked
+         if self.field[row][col] == self.flagged:
+-            self.win.blit(SIGN_IMG, (col * self.sqsize + (self.sqsize - SIGN_IMG.get_width()) / 2,
+-                                     row * self.sqsize + (self.sqsize - SIGN_IMG.get_height()) / 2))
++            self.win.blit(FLAG_IMG, (col * self.sqsize + (self.sqsize - FLAG_IMG.get_width()) / 2,
++                                     row * self.sqsize + (self.sqsize - FLAG_IMG.get_height()) / 2))

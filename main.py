@@ -24,6 +24,7 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.events = ()
+        self.actions = {"left": False, "right": False, "up": False, "down": False}
         self.settings = Settings(self)
         self.mousepos = (0, 0)
         """try:
@@ -49,6 +50,11 @@ class Game:
         # todo: make window resizing more flexible
         self.win_width, self.win_height = MINSQSIZE * width, MINSQSIZE * height + SIDEBAR_HEIGHT
         self.win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
+        if self.win_width > MAX_WIN_WIDTH:
+            self.win_width = MAX_WIN_WIDTH
+        if self.win_height == MAX_WIN_HEIGHT:
+            self.win_height = MAX_WIN_HEIGHT
+
         self.face_button = ButtonMC(self, text=IDLE_FACE)
 
 
@@ -65,9 +71,6 @@ class Game:
                     self.running = False
                     self.playing = False
                     return
-                if e.type == KEYDOWN:  # pls add a general ingame state to run along with one of the other states or smt rather than using the gameloop
-                    if e.key in RESETBUTTON:
-                        self.reset()
                 if e.type == MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
                     self.mousepos = pygame.mouse.get_pos()
                     if self.face_button.rect.collidepoint(self.mousepos):
@@ -76,11 +79,32 @@ class Game:
                     if self.settings.settingsbutton.rect.collidepoint(self.mousepos):
                         CLICK_SOUND.play()
                         self.settings.open_close()
+                if e.type == KEYDOWN: # todo: maybe add a general ingame state to run along with one of the other states or smt rather than using the gameloop. so the gameloop would manage input
+                    if e.key in RESETBUTTON:
+                        self.reset()
+                    if e.key == pygame.K_a:
+                        self.actions['left'] = True
+                    if e.key == pygame.K_d:
+                        self.actions['right'] = True
+                    if e.key == pygame.K_w:
+                        self.actions['up'] = True
+                    if e.key == pygame.K_s:
+                        self.actions['down'] = True
+                if e.type == pygame.KEYUP:
+                    if e.key == pygame.K_a:
+                        self.actions['left'] = False
+                    if e.key == pygame.K_d:
+                        self.actions['right'] = False
+                    if e.key == pygame.K_w:
+                        self.actions['up'] = False
+                    if e.key == pygame.K_s:
+                        self.actions['down'] = False
 
-            # rendering
+
+                            # rendering
             self.win.fill(BG_COLOUR)
-            self.settings.update(self.events)
             self.current_states[-1].update(self.events)  # majority of input managed here
+            self.settings.update(self.events)
             pygame.display.update()
 
             self.clock.tick(FPS)

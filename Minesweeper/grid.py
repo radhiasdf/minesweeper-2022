@@ -6,7 +6,6 @@ from queue import Queue
 import math
 
 class Grid:
-    sqsize = MINSQSIZE
 
     def __init__(self, win, setcols, setrows, game):
         self.game = game
@@ -14,18 +13,13 @@ class Grid:
         self.cols = setcols
         self.rows = setrows
         self.field = [[Cell(row, col) for col in range(self.cols)] for row in range(self.rows)]
+        self.xpos = GRIDXPOS
+        self.ypos = GRIDYPOS
         self.num_mines = 0
         self.start_time = pygame.time.get_ticks()
+        self.sqsize = MINSQSIZE
 
         print(self.field)
-
-    def draw_checkerboard_cell(self, row, col, colour1, colour2, image):
-        if (row + col) % 2 == 0:  # draws a checkerboard pattern
-            colour = colour2
-        else:
-            colour = colour1
-        pygame.draw.rect(self.win, colour, (col * self.sqsize, row * self.sqsize, self.sqsize, self.sqsize))
-        self.win.blit(image, (col * self.sqsize, row * self.sqsize), special_flags=pygame.BLEND_MULT)
 
     # gets surrounding cells' coordinates,to generalise finding mines and uncovering
     def get_surrounding(self, row, col):
@@ -179,11 +173,19 @@ class Grid:
             self.game.counters.flag_count -= 1
         FLAG_SOUNDS[random.randint(0, len(FLAG_SOUNDS) - 1)].play()
 
+    def draw_checkerboard_cell(self, row, col, colour1, colour2, image):
+        if (row + col) % 2 == 0:  # draws a checkerboard pattern
+            colour = colour2
+        else:
+            colour = colour1
+        pygame.draw.rect(self.win, colour, (col * self.sqsize + self.xpos, row * self.sqsize + self.ypos, self.sqsize, self.sqsize))
+        self.win.blit(image, (col * self.sqsize + self.xpos, row * self.sqsize + self.ypos), special_flags=pygame.BLEND_MULT)
+
     # draws the lower layer
     def under_draw_iterate_cells(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                self.draw_checkerboard_cell(row, col, "white", "white", self.field[row][col].lower_img)
+                self.draw_checkerboard_cell(row, col, "white", "white", pygame.transform.scale(self.field[row][col].lower_img, (self.sqsize, self.sqsize)))
                 # so highlighting doesn't reveal the numbers
                 if self.field[row][col].revealed:
                     self.draw_number(row, col)
@@ -191,22 +193,14 @@ class Grid:
     # draws every indicator number with their respective colours
     def draw_number(self, row, col):
         if self.field[row][col].indicator > 0:
-            text = NUM_FONT.render(str(self.field[row][col].indicator), True, NUM_COLOURS[
-                self.field[row][col].indicator])  # to make them centered; there should be a simpler way
-            self.win.blit(text, (col * self.sqsize + (self.sqsize - text.get_width()) / 2,
-                                 row * self.sqsize + (self.sqsize - text.get_height()) / 2))
-
-    def draw_mines(self):  # has its own for loops for now
-        for row in range(self.rows):
-            for col in range(self.cols):
-                if self.field[row][col].mine:
-                    self.win.blit(MINE_IMG, (col * self.sqsize + (self.sqsize - MINE_IMG.get_width()) / 2,
-                                             row * self.sqsize + (self.sqsize - MINE_IMG.get_height()) / 2))
+            text = pygame.font.Font(DEFAULT_FONT, int(self.sqsize)).render(str(self.field[row][col].indicator), True, NUM_COLOURS[self.field[row][col].indicator])
+            self.win.blit(text, (col * self.sqsize + self.xpos + (self.sqsize - text.get_width()) / 2,
+                                 row * self.sqsize + self.ypos + (self.sqsize - text.get_height()) / 2))
 
     def draw_shadows(self):  # very simple shadows...
         def draw_shadow():
-            pygame.draw.rect(self.win, SHADOW_COLOUR, (col * self.sqsize + THREE_D_OFFSET_X,
-                                                       row * self.sqsize + THREE_D_OFFSET_Y,
+            pygame.draw.rect(self.win, SHADOW_COLOUR, (col * self.sqsize + self.xpos + THREE_D_OFFSET_X*(self.sqsize/MINSQSIZE),
+                                                       row * self.sqsize + self.ypos + THREE_D_OFFSET_Y*(self.sqsize/MINSQSIZE),
                                                        self.sqsize, self.sqsize))
         # not included in collective draw for loops bc the whole field needs to be shadowed first rather than per
         # cell, so the next cell's shadow isn't blitted after the previous cell's cover
@@ -221,13 +215,25 @@ class Grid:
         for row in range(self.rows):
             for col in range(self.cols):
                 if not self.field[row][col].revealed and not self.field[row][col].highlighted:  # so highlighed looks like revealed
-                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", self.field[row][col].cover_img)
+                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", pygame.transform.scale(self.field[row][col].cover_img, (self.sqsize, self.sqsize)))
                 elif self.field[row][col].highlighted and self.field[row][col].flagged:
-                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", self.field[row][col].cover_img)
+                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", pygame.transform.scale(self.field[row][col].cover_img, (self.sqsize, self.sqsize)))
                 self.draw_data(row, col)
 
     def draw_data(self, row, col):
         # Draws flag for marked
         if self.field[row][col].flagged:
-            self.win.blit(SIGN_IMG, (col * self.sqsize + (self.sqsize - SIGN_IMG.get_width()) / 2,
-                                     row * self.sqsize + (self.sqsize - SIGN_IMG.get_height()) / 2))
+            img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize))
+            self.win.blit(img, (col * self.sqsize + self.xpos + (self.sqsize - img.get_width()) / 2,
+                                row * self.sqsize + self.ypos + (self.sqsize - img.get_height()) / 2))
+
+    def update(self, actions):
+        # Get the direction from inputs
+        direction_x = actions["right"] - actions["left"]
+        direction_y = actions["down"] - actions["up"]
+        # Update the position
+        self.xpos -= GRID_MOVE_SPEED * self.game.dt * direction_x
+        self.ypos -= GRID_MOVE_SPEED * self.game.dt * direction_y
+
+
+

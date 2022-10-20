@@ -3,7 +3,6 @@ from Minesweeper.gui import *
 from Minesweeper.animations import *
 import pygame
 
-# what a chunk of redundancy ridden code idk
 
 class State:
     def __init__(self, game):
@@ -26,6 +25,8 @@ class StartPlaying(State):
         self.game.counters = Counters(self.game)
         self.flag_count = self.game.num_mines
 
+        pygame.mixer.music.stop()
+
         self.mousepos = (0, 0)
         self.mousepressed = (False, False, False)
         # specifically for storing which button would later be released
@@ -38,8 +39,8 @@ class StartPlaying(State):
         to_be_highlighted = []
 
         # assigning xy position to grid
-        self.game.m_row = int(self.mousepos[1] / self.field.sqsize)
-        self.game.m_col = int(self.mousepos[0] / self.field.sqsize)
+        self.game.m_row = int((self.mousepos[1] - self.field.ypos) / self.field.sqsize)
+        self.game.m_col = int((self.mousepos[0] - self.field.xpos) / self.field.sqsize)
         m_row, m_col = self.game.m_row, self.game.m_col
 
         # highlighting cell(s) that are pressed but not mouse up
@@ -110,6 +111,11 @@ class StartPlaying(State):
                             self.game.current_states.append(WinYay(self.game))
 
                         self.clicks += 1
+                if e.type == pygame.MOUSEWHEEL:
+                    if e.y == 0:
+                        return
+                    self.field.sqsize = int(self.field.sqsize * (1.1 ** e.y))
+        self.field.update(self.game.actions)
 
         self.render()
 
@@ -119,7 +125,7 @@ class StartPlaying(State):
         self.field.draw_shadows()
         self.field.cover_draw_iterate_cells()
         self.game.face_button.update_n_draw(self.game.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
-                                    (self.game.win_height - SIDEBAR_HEIGHT) + (SIDEBAR_HEIGHT / 2), ycentred=True, text=self.emoticon)
+                                    SIDEBAR_HEIGHT / 2, ycentred=True, text=self.emoticon)
         self.game.counters.update_n_render()
 
 
@@ -130,26 +136,30 @@ class WinYay(State):
     def update(self, events):
         # previous state is still rendered
         self.game.current_states[-2].render()
+        self.game.field.update(self.game.actions)
+
 
 
 class Lose(State):
     def __init__(self, game):
         super().__init__(game)
+        pygame.mixer.music.load(LOSE_MUSIC)
+        pygame.mixer.music.play(start=38.25)
+        get_square_size(self.game.field.sqsize)
         self.game.explosions = []
         self.game.explosions.append(Explosion(game, self.game.m_row, self.game.m_col, first_mine=True))
 
 
     def update(self, events):  # do animations or smt
+
         # rendering
         #self.game.field.layer2_draw()
         self.game.field.under_draw_iterate_cells()
-        self.game.field.draw_mines()
-        self.game.field.draw_shadows()
         for explosion in self.game.explosions:
             explosion.update()
+        self.game.field.draw_shadows()
         self.game.field.cover_draw_iterate_cells()
         self.game.face_button.update_n_draw(self.game.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
-                                            (self.game.win_height - SIDEBAR_HEIGHT) + (SIDEBAR_HEIGHT / 2),
-                                            ycentred=True, text=LOSE_FACE)
+                                            SIDEBAR_HEIGHT / 2, ycentred=True, text=LOSE_FACE)
         self.game.counters.update_n_render()
 

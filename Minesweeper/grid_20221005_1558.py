@@ -209,5 +209,5 @@ class Coverfield(Grid):
     def draw_data(self, row, col):
         # Draws flag for marked
         if self.field[row][col] == self.flagged:
-            self.win.blit(SIGN_IMG, (col * self.sqsize + (self.sqsize - SIGN_IMG.get_width()) / 2,
-                                     row * self.sqsize + (self.sqsize - SIGN_IMG.get_height()) / 2))
+            self.win.blit(FLAG_IMG, (col * self.sqsize + (self.sqsize - FLAG_IMG.get_width()) / 2,
+                                     row * self.sqsize + (self.sqsize - FLAG_IMG.get_height()) / 2))
