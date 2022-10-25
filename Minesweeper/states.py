@@ -111,10 +111,9 @@ class StartPlaying(State):
                             self.game.current_states.append(WinYay(self.game))
 
                         self.clicks += 1
+                # zooming in
                 if e.type == pygame.MOUSEWHEEL:
-                    if e.y == 0:
-                        return
-                    self.field.sqsize = int(self.field.sqsize * (1.1 ** e.y))
+                    self.field.zoom(e)
         self.field.update(self.game.actions)
 
         self.render()
@@ -124,8 +123,7 @@ class StartPlaying(State):
         self.field.under_draw_iterate_cells()
         self.field.draw_shadows()
         self.field.cover_draw_iterate_cells()
-        self.game.face_button.update_n_draw(self.game.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
-                                    SIDEBAR_HEIGHT / 2, ycentred=True, text=self.emoticon)
+        self.game.face_button.update_n_draw(text=self.emoticon)
         self.game.counters.update_n_render()
 
 
@@ -139,13 +137,11 @@ class WinYay(State):
         self.game.field.update(self.game.actions)
 
 
-
 class Lose(State):
     def __init__(self, game):
         super().__init__(game)
         pygame.mixer.music.load(LOSE_MUSIC)
         pygame.mixer.music.play(start=38.25)
-        get_square_size(self.game.field.sqsize)
         self.game.explosions = []
         self.game.explosions.append(Explosion(game, self.game.m_row, self.game.m_col, first_mine=True))
 
@@ -159,7 +155,6 @@ class Lose(State):
             explosion.update()
         self.game.field.draw_shadows()
         self.game.field.cover_draw_iterate_cells()
-        self.game.face_button.update_n_draw(self.game.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
-                                            SIDEBAR_HEIGHT / 2, ycentred=True, text=LOSE_FACE)
+        self.game.face_button.update_n_draw(text=LOSE_FACE)
         self.game.counters.update_n_render()
 

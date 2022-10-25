@@ -19,7 +19,7 @@ class Game:
         pygame.init()
         pygame.display.set_caption("minesweeper WITH BIRCH SIGNS")
         pygame.display.set_icon(ICON)
-        self.win_width, self.win_height = MINSQSIZE * self.num_cols, MINSQSIZE * self.num_rows + SIDEBAR_HEIGHT
+        self.win_width, self.win_height = MINSQSIZE * self.num_cols + GRIDXPOS*2, MINSQSIZE * self.num_rows + GRIDYPOS*2 + SIDEBAR_HEIGHT
         self.win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
         self.clock = pygame.time.Clock()
 
@@ -43,19 +43,21 @@ class Game:
             height = 10
         else:
             height = self.num_rows
-        # if not last_saved:
         self.current_states = []
         self.current_states.append(StartPlaying(self))
 
         # todo: make window resizing more flexible
         self.win_width, self.win_height = MINSQSIZE * width, MINSQSIZE * height + SIDEBAR_HEIGHT
-        self.win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
         if self.win_width > MAX_WIN_WIDTH:
             self.win_width = MAX_WIN_WIDTH
         if self.win_height == MAX_WIN_HEIGHT:
             self.win_height = MAX_WIN_HEIGHT
+        self.win = pygame.display.set_mode((self.win_width + GRIDXPOS*2 + self.settings.width, self.win_height + GRIDYPOS*2), pygame.RESIZABLE)
 
+        self.settings.update_positions((self.win_width, 0))
         self.face_button = ButtonMC(self, text=IDLE_FACE)
+        self.face_button.reposition(self.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
+                                    SIDEBAR_HEIGHT / 2, ycentred=True)
 
 
 
@@ -64,6 +66,8 @@ class Game:
         while self.playing:
             self.dt = time.time() - prev_time
             prev_time = time.time()
+            try: print(1/self.dt)
+            except: pass
 
             self.events = pygame.event.get()
             for e in self.events:
@@ -71,6 +75,9 @@ class Game:
                     self.running = False
                     self.playing = False
                     return
+                elif e.type == pygame.VIDEORESIZE:
+                    self.face_button.reposition(self.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
+                    SIDEBAR_HEIGHT / 2, ycentred=True)
                 if e.type == MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
                     self.mousepos = pygame.mouse.get_pos()
                     if self.face_button.rect.collidepoint(self.mousepos):
@@ -100,8 +107,6 @@ class Game:
                     if e.key == pygame.K_s:
                         self.actions['down'] = False
 
-
-                            # rendering
             self.win.fill(BG_COLOUR)
             self.current_states[-1].update(self.events)  # majority of input managed here
             self.settings.update(self.events)

@@ -62,14 +62,18 @@ BUTTON_IMGS = [pygame.transform.scale(pygame.image.load('assets/mc_generalised_b
 
 MINE_IMG = pygame.image.load('assets/TNT_ 28top_texture 29_JE2_BE2.png')
 MINE_IMG_BRIGHT = changeColour(MINE_IMG, (255,255,255), special_flags=pygame.BLEND_RGB_ADD)  # not perfect, i havent succeded in making a white overlay
+MINE_IMG = pygame.transform.scale(MINE_IMG, (MINSQSIZE, MINSQSIZE))
+MINE_IMG_BRIGHT = pygame.transform.scale(MINE_IMG_BRIGHT, (MINSQSIZE, MINSQSIZE))
+
+
 FLAG_IMG = pygame.image.load('assets/Birch_Sign_JE1_BE1.png')
 COVER_IMG = pygame.image.load('assets/Grass_Block_29_JE4_BE2.png')
 LOWER_CELL_IMG = pygame.image.load('assets/Sand_ 28texture 29_JE5_BE3.png')
 
 # animations
-EXPLOSIONS = []
+EXPLOSION_PARTICLES = []
 for i in range(15):
-    EXPLOSIONS.append(pygame.image.load(f"assets/explosion/explosion_{i+1}.png"))
+    EXPLOSION_PARTICLES.append(pygame.image.load(f"assets/explosion/explosion_{i+1}.png"))
 
 # fonts
 BOLD_FONT = 'assets/MinecraftBold-nMK1.ttf'
@@ -89,5 +93,6 @@ for sound in EXPLODE_SOUNDS:
     sound.set_volume(0.4)
 FLAG_SOUNDS = [pygame.mixer.Sound(f"assets/sounds/wood{i + 1}.ogg") for i in range(4)]
 LOSE_MUSIC = 'assets/sounds/[YT2mp3.info] - C418 - Stal (Minecraft Volume Beta) (256kbps).mp3'
+WIN_MUSIC = 'assets/sounds/[YT2mp3.info] - C418 - Door - Minecraft Volume Alpha (320kbps).mp3'
 pygame.mixer.music.set_volume(0.4)
 EXPLODE_RADIUS = 4

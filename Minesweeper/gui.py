@@ -1,5 +1,3 @@
-# i definitely need to fundamentally change how the gui works calculating the positions so the buttons etc are flexibly arranged one after another
-
 from .constants import *
 import time
 
@@ -11,13 +9,17 @@ class ButtonMC:
         self.texture = BUTTON_IMGS[0]
         self.rect = self.texture.get_rect()
 
-    def update_n_draw(self, xpos, ypos, xcentred=False, ycentred=False, text=''):
+    # so position is only calculated and updated in certain events
+    def reposition(self, xpos, ypos, xcentred=False, ycentred=False):
         if xcentred:
             xpos = xpos - (self.texture.get_width() / 2)
         if ycentred:
             ypos = ypos - (self.texture.get_height() / 2)
+        # rect has to be created plus rect's positions to be changed for using rect in collidepoint
         self.rect[0], self.rect[1] = xpos, ypos
 
+    # position is set independently of drawing...
+    def update_n_draw(self, text=''):
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             self.texture = BUTTON_IMGS[1]
         else:
@@ -95,6 +97,8 @@ class Settings:
     def __init__(self, game):
         self.game = game
         self.is_open = False
+        self.width = 0
+        self.pos = [self.game.win_width, 0]
         self.buttons = []
         self.settingsbutton = ButtonMC(game, text='S')
         # default mode buttons
@@ -118,40 +122,55 @@ class Settings:
     def open_close(self):
         if self.is_open:
             self.is_open = False
-            pygame.display.set_mode((self.game.win_width, self.game.win_height), pygame.RESIZABLE)
+            self.width = 0
         else:
             self.is_open = True
-            pygame.display.set_mode((self.game.win_width + SETTINGS_WIDTH, self.game.win_height), pygame.RESIZABLE)
+            self.width = SETTINGS_WIDTH
+        pygame.display.set_mode((self.pos[0] + self.width, self.game.win_height), pygame.RESIZABLE)
+        # now settings is at the right of the window, outside the grid
+        self.update_positions(self.pos)
+
+    # positions are updated only everytime the user moves settings or settings is moved
+    def update_positions(self, settings_pos):
+        self.settingsbutton.reposition(self.game.win_width / 2 + BUTTON_SPACING, (SIDEBAR_HEIGHT / 2), ycentred=True)
+        self.pos = settings_pos
+
+        # everything in the settings bar is anchored to the settings position
+        # the elements' positions reference each other's positions to make it easier to read and understand
+        for i in range(len(self.modebuttons)):
+            self.modebuttons[i].reposition(self.pos[0] + GUI_PADDING + i * BUTTON_IMGS[0].get_width(),
+                                           self.pos[1] + GUI_PADDING)
 
     def update(self, events):
         mousepos = pygame.mouse.get_pos()
-
-        self.settingsbutton.update_n_draw(self.game.win_width / 2 + BUTTON_SPACING,
-                                          (SIDEBAR_HEIGHT / 2),
-                                          ycentred=True)
+        self.settingsbutton.update_n_draw()
         if self.is_open:
             try:
                 rows = int(self.textboxes[0].text)
                 if rows > MAX_ROWS:
                     rows = MAX_ROWS
                     self.textboxes[0].text = str(rows)
-            except: pass
+            except:
+                pass
             try:
                 cols = int(self.textboxes[1].text)
                 if cols > MAX_COLS:
                     cols = MAX_COLS
                     self.textboxes[1].text = str(cols)
-            except: pass
+            except:
+                pass
             try:
                 mines = int(self.textboxes[2].text)
                 if mines > rows * cols:
                     mines = rows * cols
                     self.textboxes[2].text = str(mines)
-            except: pass
+            except:
+                pass
 
             for e in events:
                 if e.type == pygame.MOUSEBUTTONDOWN:
-                    for i in range(len(self.textboxes)):  # 6/10/2022 there was a bug where only the last textbox cant be set to true, this is bc teh for loop resets them to unselected except at the end
+                    for i in range(
+                            len(self.textboxes)):  # 6/10/2022 there was a bug where only the last textbox cant be set to true, this is bc teh for loop resets them to unselected except at the end
                         if self.textboxes[i].rect.collidepoint(mousepos):
                             self.textboxes[i].selected = True
                         else:
@@ -186,29 +205,34 @@ class Settings:
 
             # rendering buttons with updated positions. positions need to be changed to anchor to settings position
             for i in range(len(MODES)):
-                self.modebuttons[i].update_n_draw(i * BUTTON_IMGS[0].get_width() + self.game.win_width + GUI_PADDING,
-                                                  GUI_PADDING)
-            self.enterbutton.update_n_draw(self.textboxes[-1].rect.x + self.textboxes[-1].rect.width + GUI_PADDING,
-                                           self.textboxes[-1].rect.y)
+                self.modebuttons[i].update_n_draw()
 
-            # rendering textboxes, their ypos coded to come after buttons plus their row col mines title
+            # rendering textboxes, their ypos coded to come after buttons plus their row col mines title. i think this is hideous and done the wrong way
             for i in range(len(self.textboxes)):
-                xpos = i * (TEXTBOX_WIDTH + GUI_PADDING) + GUI_PADDING + self.game.win_width
-                ypos = self.buttons[0].texture.get_height() + SMALL_FONT.get_height() * 2
+                xpos = self.pos[0] + GUI_PADDING + i * (TEXTBOX_WIDTH + GUI_PADDING)
+
+                # word describing what each textbox is for
+                row_col_mines_text = SMALL_FONT.render(str(PARAMETERS[i]), True, 'gray70')
+                row_col_mines_text_pos = (xpos + 2, self.modebuttons[0].rect.y + self.modebuttons[0].rect.h + GUI_PADDING)
+                self.game.win.blit(row_col_mines_text, row_col_mines_text_pos)
 
                 # the mines textbox is slightly wider
                 textbox_width = TEXTBOX_WIDTH
-                if i == 2: textbox_width = TEXTBOX_WIDTH + SETTINGS_FONT.get_height()
-                self.textboxes[i].draw(xpos, ypos, textbox_width, SETTINGS_FONT.get_height() * 1.5)
+                if i == 2:
+                    textbox_width = TEXTBOX_WIDTH + SETTINGS_FONT.get_height()
+                self.textboxes_y = row_col_mines_text_pos[1] + row_col_mines_text.get_height()
+                self.textboxes_h = SETTINGS_FONT.get_height() * 1.5
+                self.textboxes[i].draw(xpos, self.textboxes_y, textbox_width, self.textboxes_h)
 
-                # word describing what each textbox is for
-                rendered_text = SMALL_FONT.render(str(PARAMETERS[i]), True, 'gray70')
-                self.game.win.blit(rendered_text, (xpos + 2, ypos - self.textboxes[i].rect.h/2 - 2))
+            self.enterbutton.reposition(self.textboxes[-1].rect.x + self.textboxes[-1].rect.width + GUI_PADDING,
+                                        self.textboxes[-1].rect.y)
+            self.enterbutton.update_n_draw()
+
+
             # mine frequency indicator
             try:
-                rarity = str(round((rows * cols)/mines, 1))
+                rarity = str(round((rows * cols) / mines, 1))
                 rendered_text = SMALL_FONT.render("1 mine every " + rarity + " squares", True, 'gray70')
-                self.game.win.blit(rendered_text, (self.game.win_width + GUI_PADDING, self.buttons[0].texture.get_height() + SMALL_FONT.get_height()*2 + SETTINGS_FONT.get_height() * 1.5 + 2))
+                self.game.win.blit(rendered_text, (self.pos[0] + GUI_PADDING, self.textboxes_y + self.textboxes_h + GUI_PADDING))
             except:
                 pass
-

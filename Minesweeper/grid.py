@@ -12,12 +12,16 @@ class Grid:
         self.win = win
         self.cols = setcols
         self.rows = setrows
-        self.field = [[Cell(row, col) for col in range(self.cols)] for row in range(self.rows)]
         self.xpos = GRIDXPOS
         self.ypos = GRIDYPOS
         self.num_mines = 0
         self.start_time = pygame.time.get_ticks()
         self.sqsize = MINSQSIZE
+        self.flag_img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize))
+        self.field = [[Cell(row, col, self.sqsize) for col in range(self.cols)] for row in range(self.rows)]
+        self.set_rendered_sized_graphics()
+
+
 
         print(self.field)
 
@@ -185,7 +189,7 @@ class Grid:
     def under_draw_iterate_cells(self):
         for row in range(self.rows):
             for col in range(self.cols):
-                self.draw_checkerboard_cell(row, col, "white", "white", pygame.transform.scale(self.field[row][col].lower_img, (self.sqsize, self.sqsize)))
+                self.draw_checkerboard_cell(row, col, "white", "white", self.field[row][col].lower_img)
                 # so highlighting doesn't reveal the numbers
                 if self.field[row][col].revealed:
                     self.draw_number(row, col)
@@ -193,7 +197,7 @@ class Grid:
     # draws every indicator number with their respective colours
     def draw_number(self, row, col):
         if self.field[row][col].indicator > 0:
-            text = pygame.font.Font(DEFAULT_FONT, int(self.sqsize)).render(str(self.field[row][col].indicator), True, NUM_COLOURS[self.field[row][col].indicator])
+            text = self.rendered_nums[self.field[row][col].indicator]
             self.win.blit(text, (col * self.sqsize + self.xpos + (self.sqsize - text.get_width()) / 2,
                                  row * self.sqsize + self.ypos + (self.sqsize - text.get_height()) / 2))
 
@@ -215,15 +219,15 @@ class Grid:
         for row in range(self.rows):
             for col in range(self.cols):
                 if not self.field[row][col].revealed and not self.field[row][col].highlighted:  # so highlighed looks like revealed
-                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", pygame.transform.scale(self.field[row][col].cover_img, (self.sqsize, self.sqsize)))
+                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", self.field[row][col].cover_img)
                 elif self.field[row][col].highlighted and self.field[row][col].flagged:
-                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", pygame.transform.scale(self.field[row][col].cover_img, (self.sqsize, self.sqsize)))
+                    self.draw_checkerboard_cell(row, col, "darkolivegreen3", "darkolivegreen3", self.field[row][col].cover_img)
                 self.draw_data(row, col)
 
     def draw_data(self, row, col):
         # Draws flag for marked
         if self.field[row][col].flagged:
-            img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize))
+            img = self.flag_img
             self.win.blit(img, (col * self.sqsize + self.xpos + (self.sqsize - img.get_width()) / 2,
                                 row * self.sqsize + self.ypos + (self.sqsize - img.get_height()) / 2))
 
@@ -235,5 +239,18 @@ class Grid:
         self.xpos -= GRID_MOVE_SPEED * self.game.dt * direction_x
         self.ypos -= GRID_MOVE_SPEED * self.game.dt * direction_y
 
+    def zoom(self, e):
+        if e.y == 0:
+            return
+        self.sqsize = int(self.sqsize * (1.1 ** e.y))
+        self.set_rendered_sized_graphics()
 
+    def set_rendered_sized_graphics(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                self.field[row][col].lower_img = pygame.transform.rotate(pygame.transform.scale(LOWER_CELL_IMG, (self.sqsize, self.sqsize)), self.field[row][col].random_rotation).convert()
+                self.field[row][col].cover_img = pygame.transform.rotate(pygame.transform.scale(COVER_IMG, (self.sqsize, self.sqsize)), self.field[row][col].random_rotation).convert()
+        self.flag_img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize)).convert()
+        self.rendered_nums = {i : pygame.font.Font(DEFAULT_FONT, int(self.sqsize)).render(str(i), True, NUM_COLOURS[i]) for i in NUM_COLOURS}
+        print(self.rendered_nums)
 
