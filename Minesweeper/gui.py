@@ -1,5 +1,8 @@
 from .constants import *
 import time
+mineImg = pygame.transform.scale(MINE_IMG, (SMALL_FONT_SIZE, SMALL_FONT_SIZE))
+coverImg = pygame.transform.scale(COVER_IMG, (SMALL_FONT_SIZE, SMALL_FONT_SIZE))
+coverImg = change_colour(coverImg, 'darkolivegreen3')
 
 
 class ButtonMC:
@@ -119,16 +122,14 @@ class Settings:
         self.enterbutton = ButtonMC(game, text=ENTER_SYM)
         self.buttons.append(self.enterbutton)
 
-    def open_close(self):
+    def open_toggle(self):
         if self.is_open:
             self.is_open = False
-            self.width = 0
+            self.win = pygame.display.set_mode((self.game.win_width, self.game.win_height), pygame.RESIZABLE)
         else:
             self.is_open = True
-            self.width = SETTINGS_WIDTH
-        pygame.display.set_mode((self.pos[0] + self.width, self.game.win_height), pygame.RESIZABLE)
+            self.win = pygame.display.set_mode((self.game.win_width + SETTINGS_WIDTH, self.game.win_height), pygame.RESIZABLE)
         # now settings is at the right of the window, outside the grid
-        self.update_positions(self.pos)
 
     # positions are updated only everytime the user moves settings or settings is moved
     def update_positions(self, settings_pos):
@@ -228,11 +229,18 @@ class Settings:
                                         self.textboxes[-1].rect.y)
             self.enterbutton.update_n_draw()
 
-
             # mine frequency indicator
             try:
                 rarity = str(round((rows * cols) / mines, 1))
-                rendered_text = SMALL_FONT.render("1 mine every " + rarity + " squares", True, 'gray70')
+                rendered_text = SMALL_FONT.render("1     / " + rarity, True, 'gray70')
                 self.game.win.blit(rendered_text, (self.pos[0] + GUI_PADDING, self.textboxes_y + self.textboxes_h + GUI_PADDING))
+                self.game.win.blit(mineImg, (self.pos[0] + GUI_PADDING + SMALL_FONT_SIZE, self.textboxes_y + self.textboxes_h + GUI_PADDING))
+                self.game.win.blit(coverImg, (self.pos[0] + GUI_PADDING + SMALL_FONT_SIZE*5.5, self.textboxes_y + self.textboxes_h + GUI_PADDING))
             except:
                 pass
+
+            # hardcoded
+            for i in range(len(CREDITS_TEXT)):
+                rendered_text = SMALL_FONT.render(CREDITS_TEXT[i], True, 'gray70')
+                self.game.win.blit(rendered_text, (self.pos[0] + GUI_PADDING, self.game.win_height - rendered_text.get_height()*(len(CREDITS_TEXT)-i) - GUI_PADDING))
+

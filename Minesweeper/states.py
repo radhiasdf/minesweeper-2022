@@ -1,6 +1,6 @@
-from Minesweeper.grid import *
-from Minesweeper.gui import *
-from Minesweeper.animations import *
+from .grid import *
+from .gui import *
+from .animations import *
 import pygame
 
 
@@ -67,7 +67,7 @@ class StartPlaying(State):
                 # generates data if clicking the first time and reveals cells every click on a covered cell + check gameover
                 if e.type == pygame.MOUSEBUTTONUP:
                     print(f'mouse button up, {self.mpressed_at_mdown}')
-                    # aha! self.mousepressed was constantly resetting every frame so field cant be revealed. the solution is storing which mousebuttons down only at the instant its pressed
+                    # self.mousepressed was constantly resetting every frame so field cant be revealed. the solution is storing which mousebuttons down only at the instant its pressed
 
                     if self.mpressed_at_mdown[0] and not self.mpressed_at_mdown[2]:
 
@@ -96,8 +96,6 @@ class StartPlaying(State):
 
                     # losing
                     if self.gameover:
-                        self.game.counters.stopwatch_paused = True
-                        self.emoticon = LOSE_FACE
                         self.game.current_states.append(Lose(self.game))
 
                     # winning
@@ -106,8 +104,6 @@ class StartPlaying(State):
                         for row in self.field.field:
                             num_revealed += [cell.revealed for cell in row].count(False)
                         if num_revealed == self.field.num_mines:
-                            self.game.counters.stopwatch_paused = True
-                            self.emoticon = WIN_FACE
                             self.game.current_states.append(WinYay(self.game))
 
                         self.clicks += 1
@@ -130,24 +126,29 @@ class StartPlaying(State):
 class WinYay(State):
     def __init__(self, game):
         super().__init__(game)
+        self.game.counters.stopwatch_paused = True
+        pygame.mixer.music.load(WIN_MUSIC)
+        pygame.mixer.music.play(start=20)
 
     def update(self, events):
-        # previous state is still rendered
-        self.game.current_states[-2].render()
+        self.game.field.under_draw_iterate_cells()
+        self.game.field.draw_shadows()
+        self.game.field.cover_draw_iterate_cells()
+        self.game.face_button.update_n_draw(text=WIN_FACE)
+        self.game.counters.update_n_render()
         self.game.field.update(self.game.actions)
 
 
 class Lose(State):
     def __init__(self, game):
         super().__init__(game)
+        self.game.counters.stopwatch_paused = True
         pygame.mixer.music.load(LOSE_MUSIC)
         pygame.mixer.music.play(start=38.25)
         self.game.explosions = []
         self.game.explosions.append(Explosion(game, self.game.m_row, self.game.m_col, first_mine=True))
 
-
     def update(self, events):  # do animations or smt
-
         # rendering
         #self.game.field.layer2_draw()
         self.game.field.under_draw_iterate_cells()

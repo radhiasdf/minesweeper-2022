@@ -5,6 +5,7 @@ import random
 from queue import Queue
 import math
 
+
 class Grid:
 
     def __init__(self, win, setcols, setrows, game):
@@ -20,8 +21,6 @@ class Grid:
         self.flag_img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize))
         self.field = [[Cell(row, col, self.sqsize) for col in range(self.cols)] for row in range(self.rows)]
         self.set_rendered_sized_graphics()
-
-
 
         print(self.field)
 
@@ -240,6 +239,8 @@ class Grid:
         self.ypos -= GRID_MOVE_SPEED * self.game.dt * direction_y
 
     def zoom(self, e):
+        return
+        print(e)
         if e.y == 0:
             return
         self.sqsize = int(self.sqsize * (1.1 ** e.y))
@@ -252,5 +253,4 @@ class Grid:
                 self.field[row][col].cover_img = pygame.transform.rotate(pygame.transform.scale(COVER_IMG, (self.sqsize, self.sqsize)), self.field[row][col].random_rotation).convert()
         self.flag_img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize)).convert()
         self.rendered_nums = {i : pygame.font.Font(DEFAULT_FONT, int(self.sqsize)).render(str(i), True, NUM_COLOURS[i]) for i in NUM_COLOURS}
-        print(self.rendered_nums)
 

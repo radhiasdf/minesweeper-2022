@@ -1,6 +1,6 @@
 import random
 import pygame.surface
-from Minesweeper.constants import EXPLOSION_PARTICLES, MINSQSIZE, EXPLODE_RADIUS, EXPLODE_SOUNDS, MINE_IMG, MINE_IMG_BRIGHT, changeColour
+from .constants import EXPLOSION_PARTICLES, MINSQSIZE, EXPLODE_RADIUS, EXPLODE_SOUNDS, MINE_IMG, MINE_IMG_BRIGHT, change_colour
 radiusInPixels = (EXPLODE_RADIUS - 1)
 
 
@@ -71,6 +71,8 @@ class Explosion:
                 del p
             else:
                 p.update()
+        if len(self.particles) == 0:
+            del self
 
     def draw_mine(self):
         if self.flashToggle:
@@ -93,5 +95,5 @@ class ExplosionParticle:
         self.imgs = imgs
 
     def update(self):
-        self.image = changeColour(self.imgs[int(self.frameIndex)], self.colour)
+        self.image = change_colour(self.imgs[int(self.frameIndex)], self.colour)
         self.game.win.blit(self.image, (self.xpos + self.randomXOffset, self.ypos + self.randomYOffset))

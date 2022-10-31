@@ -15,11 +15,12 @@ class Game:
             self.num_rows, self.num_cols, self.num_mines = user_data["r_c_m"]
         except:
             self.num_rows, self.num_cols, self.num_mines = MEDIUM
+        self.sqsize = MINSQSIZE
 
         pygame.init()
         pygame.display.set_caption("minesweeper WITH BIRCH SIGNS")
         pygame.display.set_icon(ICON)
-        self.win_width, self.win_height = MINSQSIZE * self.num_cols + GRIDXPOS*2, MINSQSIZE * self.num_rows + GRIDYPOS*2 + SIDEBAR_HEIGHT
+        self.win_width, self.win_height = self.sqsize * self.num_cols + GRIDXPOS*2, self.sqsize * self.num_rows + GRIDYPOS*2 + SIDEBAR_HEIGHT
         self.win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
         self.clock = pygame.time.Clock()
 
@@ -47,19 +48,22 @@ class Game:
         self.current_states.append(StartPlaying(self))
 
         # todo: make window resizing more flexible
-        self.win_width, self.win_height = MINSQSIZE * width, MINSQSIZE * height + SIDEBAR_HEIGHT
+        self.win_width, self.win_height = self.sqsize * width, self.sqsize * height + SIDEBAR_HEIGHT
         if self.win_width > MAX_WIN_WIDTH:
             self.win_width = MAX_WIN_WIDTH
         if self.win_height == MAX_WIN_HEIGHT:
             self.win_height = MAX_WIN_HEIGHT
-        self.win = pygame.display.set_mode((self.win_width + GRIDXPOS*2 + self.settings.width, self.win_height + GRIDYPOS*2), pygame.RESIZABLE)
+        self.win_width += GRIDXPOS*2
+        self.win_height += GRIDXPOS*2
 
         self.settings.update_positions((self.win_width, 0))
         self.face_button = ButtonMC(self, text=IDLE_FACE)
         self.face_button.reposition(self.win_width / 2 - BUTTON_SPACING - BUTTON_IMGS[0].get_width(),
                                     SIDEBAR_HEIGHT / 2, ycentred=True)
-
-
+        if self.settings.is_open:
+            self.win = pygame.display.set_mode((self.win_width + SETTINGS_WIDTH, self.win_height), pygame.RESIZABLE)
+        else:
+            self.win = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
 
     def game_loop(self):
         prev_time = time.time()
@@ -85,7 +89,7 @@ class Game:
                         self.reset()
                     if self.settings.settingsbutton.rect.collidepoint(self.mousepos):
                         CLICK_SOUND.play()
-                        self.settings.open_close()
+                        self.settings.open_toggle()
                 if e.type == KEYDOWN: # todo: maybe add a general ingame state to run along with one of the other states or smt rather than using the gameloop. so the gameloop would manage input
                     if e.key in RESETBUTTON:
                         self.reset()

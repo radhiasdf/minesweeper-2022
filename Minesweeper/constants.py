@@ -2,7 +2,7 @@ import pygame
 import shelve
 
 
-def changeColour(image, colour, special_flags=pygame.BLEND_MULT):
+def change_colour(image, colour, special_flags=pygame.BLEND_MULT):
     colouredImage = pygame.Surface(image.get_size())
     colouredImage.fill(colour)
 
@@ -61,7 +61,7 @@ BUTTON_IMGS = [pygame.transform.scale(pygame.image.load('assets/mc_generalised_b
                pygame.transform.scale(pygame.image.load('assets/mc_generalised_button_hover.png'), (40, 36))]
 
 MINE_IMG = pygame.image.load('assets/TNT_ 28top_texture 29_JE2_BE2.png')
-MINE_IMG_BRIGHT = changeColour(MINE_IMG, (255,255,255), special_flags=pygame.BLEND_RGB_ADD)  # not perfect, i havent succeded in making a white overlay
+MINE_IMG_BRIGHT = change_colour(MINE_IMG, (255, 255, 255), special_flags=pygame.BLEND_RGB_ADD)  # not perfect, i havent succeded in making a white overlay
 MINE_IMG = pygame.transform.scale(MINE_IMG, (MINSQSIZE, MINSQSIZE))
 MINE_IMG_BRIGHT = pygame.transform.scale(MINE_IMG_BRIGHT, (MINSQSIZE, MINSQSIZE))
 
@@ -80,7 +80,8 @@ BOLD_FONT = 'assets/MinecraftBold-nMK1.ttf'
 DEFAULT_FONT = 'assets/MinecraftRegular-Bmg3.ttf'
 SIDEBAR_FONT = pygame.font.Font(DEFAULT_FONT, 22)  # pls make the pixel size consistent
 SETTINGS_FONT = pygame.font.Font(DEFAULT_FONT, 22)
-SMALL_FONT = pygame.font.Font(DEFAULT_FONT, 16)
+SMALL_FONT_SIZE = 16
+SMALL_FONT = pygame.font.Font(DEFAULT_FONT, SMALL_FONT_SIZE)
 
 NUM_COLOURS = {1: "blue", 2: "darkgreen", 3: "red", 4: "darkblue", 5: "darkred", 6: "darkcyan", 7: "black",
                8: "dimgray"}
@@ -96,3 +97,9 @@ LOSE_MUSIC = 'assets/sounds/[YT2mp3.info] - C418 - Stal (Minecraft Volume Beta) 
 WIN_MUSIC = 'assets/sounds/[YT2mp3.info] - C418 - Door - Minecraft Volume Alpha (320kbps).mp3'
 pygame.mixer.music.set_volume(0.4)
 EXPLODE_RADIUS = 4
+
+# hardcoded
+CREDITS_TEXT = ['All assets credited to',
+                'Minecraft',
+                'Powered by Pygame']
+
