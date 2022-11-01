@@ -1,4 +1,3 @@
-import pygame
 from .cells import *
 from .constants import *
 import random

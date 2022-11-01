@@ -1,6 +1,4 @@
 # the versioning is a bit ruined
-import time
-
 import pygame.time
 from pygame import QUIT, KEYDOWN, MOUSEBUTTONDOWN
 from Minesweeper.states import *
@@ -70,8 +68,8 @@ class Game:
         while self.playing:
             self.dt = time.time() - prev_time
             prev_time = time.time()
-            try: print(1/self.dt)
-            except: pass
+            #try: print(1/self.dt)
+            #except: pass
 
             self.events = pygame.event.get()
             for e in self.events:

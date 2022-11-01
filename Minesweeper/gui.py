@@ -1,8 +1,9 @@
+import pygame.draw
+
 from .constants import *
 import time
 mineImg = pygame.transform.scale(MINE_IMG, (SMALL_FONT_SIZE, SMALL_FONT_SIZE))
 coverImg = pygame.transform.scale(COVER_IMG, (SMALL_FONT_SIZE, SMALL_FONT_SIZE))
-coverImg = change_colour(coverImg, 'darkolivegreen3')
 
 
 class ButtonMC:
@@ -104,7 +105,7 @@ class Settings:
         self.pos = [self.game.win_width, 0]
         self.buttons = []
         self.settingsbutton = ButtonMC(game, text='S')
-        # default mode buttons
+        # default modes buttons
         self.modebuttons = []
         for i in range(len(MODES)):
             current = ButtonMC(self.game, text=MODES[i][0])
@@ -121,6 +122,8 @@ class Settings:
         # enter button for user inputted row col mines
         self.enterbutton = ButtonMC(game, text=ENTER_SYM)
         self.buttons.append(self.enterbutton)
+
+        self.soundToggle = ButtonMC(game)
 
     def open_toggle(self):
         if self.is_open:
@@ -168,6 +171,9 @@ class Settings:
             except:
                 pass
 
+            try: self.configHighscoreKey = f"highscore_{rows}_{cols}_{mines}"
+            except UnboundLocalError: pass
+
             for e in events:
                 if e.type == pygame.MOUSEBUTTONDOWN:
                     for i in range(
@@ -191,7 +197,7 @@ class Settings:
                                     self.game.num_cols = cols
                                     self.game.num_mines = mines
                                     self.game.reset()
-                                except:
+                                except UnboundLocalError:
                                     pass
 
                 if e.type == pygame.KEYDOWN:
@@ -229,13 +235,26 @@ class Settings:
                                         self.textboxes[-1].rect.y)
             self.enterbutton.update_n_draw()
 
-            # mine frequency indicator
+            # mine frequency indicator and highscore
+            xpos = self.pos[0] + GUI_PADDING
+            ypos = self.textboxes_y + self.textboxes_h + GUI_PADDING
             try:
                 rarity = str(round((rows * cols) / mines, 1))
                 rendered_text = SMALL_FONT.render("1     / " + rarity, True, 'gray70')
-                self.game.win.blit(rendered_text, (self.pos[0] + GUI_PADDING, self.textboxes_y + self.textboxes_h + GUI_PADDING))
-                self.game.win.blit(mineImg, (self.pos[0] + GUI_PADDING + SMALL_FONT_SIZE, self.textboxes_y + self.textboxes_h + GUI_PADDING))
-                self.game.win.blit(coverImg, (self.pos[0] + GUI_PADDING + SMALL_FONT_SIZE*5.5, self.textboxes_y + self.textboxes_h + GUI_PADDING))
+                self.game.win.blit(rendered_text, (xpos, ypos))
+                self.game.win.blit(mineImg, (xpos + SMALL_FONT_SIZE, ypos))
+
+                coverImgPos = (xpos + rendered_text.get_width() + SMALL_FONT_SIZE//2, ypos)
+                pygame.draw.rect(self.win, "darkolivegreen3", (coverImgPos[0], coverImgPos[1], coverImg.get_width(), coverImg.get_height()))
+                self.game.win.blit(coverImg, coverImgPos, special_flags=pygame.BLEND_MULT)
+
+                # highscore is only printed when all 3 parameters are filled
+                ypos = ypos + SMALL_FONT_SIZE + GUI_PADDING
+                try:
+                    rendered_text = SMALL_FONT.render(f"Best: {user_data[self.configHighscoreKey]}", True, 'white')
+                except KeyError:
+                    rendered_text = SMALL_FONT.render("Best: -", True, 'gray70')
+                self.game.win.blit(rendered_text, (xpos, ypos))
             except:
                 pass
 

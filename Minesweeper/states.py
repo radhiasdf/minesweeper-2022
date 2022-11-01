@@ -39,18 +39,23 @@ class StartPlaying(State):
         to_be_highlighted = []
 
         # assigning xy position to grid
-        self.game.m_row = int((self.mousepos[1] - self.field.ypos) / self.field.sqsize)
-        self.game.m_col = int((self.mousepos[0] - self.field.xpos) / self.field.sqsize)
+        self.game.m_row = math.floor((self.mousepos[1] - self.field.ypos) / self.field.sqsize)
+        self.game.m_col = math.floor((self.mousepos[0] - self.field.xpos) / self.field.sqsize)
         m_row, m_col = self.game.m_row, self.game.m_col
+        print(f"{self.mousepos[1]} {self.mousepos[0]}")
+        print(f"{m_row} {m_col}")
 
         # highlighting cell(s) that are pressed but not mouse up
         self.field.highlight_update2(m_row, m_col, self.mousepressed)
 
         # face expression update
         if 0 <= m_row < self.game.num_rows and 0 <= m_col < self.game.num_cols:
-            if self.mousepressed[0]: self.emoticon = MOUSEDOWN_FACE
-            else: self.emoticon = IDLE_FACE
-        else: self.emoticon = IDLE_FACE
+            if self.mousepressed[0]:
+                self.emoticon = MOUSEDOWN_FACE
+            else:
+                self.emoticon = IDLE_FACE
+        else:
+            self.emoticon = IDLE_FACE
 
         for e in events:
             # if mouse is in grid
@@ -129,6 +134,16 @@ class WinYay(State):
         self.game.counters.stopwatch_paused = True
         pygame.mixer.music.load(WIN_MUSIC)
         pygame.mixer.music.play(start=20)
+
+        # each configuration/mode has its own highscore
+        score = self.game.counters.stopwatch
+        config_highscore = f"highscore_{self.game.num_rows}_{self.game.num_cols}_{self.game.num_mines}"
+        try:
+            if score < user_data[config_highscore]:
+                user_data[config_highscore] = score
+        except KeyError:
+            user_data[config_highscore] = score
+        print(f"highscore: {user_data[config_highscore]}")
 
     def update(self, events):
         self.game.field.under_draw_iterate_cells()
