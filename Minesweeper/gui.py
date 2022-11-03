@@ -128,10 +128,10 @@ class Settings:
     def open_toggle(self):
         if self.is_open:
             self.is_open = False
-            self.win = pygame.display.set_mode((self.game.win_width, self.game.win_height), pygame.RESIZABLE)
+            self.win = pygame.display.set_mode((self.game.win_width, self.game.win_height))#, pygame.RESIZABLE)
         else:
             self.is_open = True
-            self.win = pygame.display.set_mode((self.game.win_width + SETTINGS_WIDTH, self.game.win_height), pygame.RESIZABLE)
+            self.win = pygame.display.set_mode((self.game.win_width + SETTINGS_WIDTH, self.game.win_height))#, pygame.RESIZABLE)
         # now settings is at the right of the window, outside the grid
 
     # positions are updated only everytime the user moves settings or settings is moved

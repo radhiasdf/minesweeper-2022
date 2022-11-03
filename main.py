@@ -11,6 +11,12 @@ class Game:
         self.playing = True
         try:
             self.num_rows, self.num_cols, self.num_mines = user_data["r_c_m"]
+            if self.num_rows > MAX_ROWS:
+                self.num_rows = MAX_ROWS
+            if self.num_cols > MAX_COLS:
+                self.num_cols = MAX_COLS
+            if self.num_mines > self.num_rows*self.num_cols:
+                self.num_mines = self.num_rows*self.num_cols
         except:
             self.num_rows, self.num_cols, self.num_mines = MEDIUM
         self.sqsize = MINSQSIZE
@@ -45,7 +51,7 @@ class Game:
         self.current_states = []
         self.current_states.append(StartPlaying(self))
 
-        # todo: make window resizing more flexible
+        # to do: make window resizing more flexible
         self.win_width, self.win_height = self.sqsize * width, self.sqsize * height + SIDEBAR_HEIGHT
         if self.win_width > MAX_WIN_WIDTH:
             self.win_width = MAX_WIN_WIDTH
@@ -109,7 +115,6 @@ class Game:
                     if e.key == pygame.K_s:
                         self.actions['down'] = False
 
-            self.win.fill(BG_COLOUR)
             self.current_states[-1].update(self.events)  # majority of input managed here
             self.settings.update(self.events)
             pygame.display.update()

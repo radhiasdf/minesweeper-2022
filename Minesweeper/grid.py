@@ -1,3 +1,5 @@
+import pygame
+
 from .cells import *
 from .constants import *
 import random
@@ -17,7 +19,7 @@ class Grid:
         self.num_mines = 0
         self.start_time = pygame.time.get_ticks()
         self.sqsize = MINSQSIZE
-        self.flag_img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize))
+        self.flagImg = pygame.transform.scale(FLAG_IMGS[0], (self.sqsize, self.sqsize)).convert()
         self.field = [[Cell(row, col, self.sqsize) for col in range(self.cols)] for row in range(self.rows)]
         self.set_rendered_sized_graphics()
 
@@ -59,21 +61,26 @@ class Grid:
     def generate_data(self, mrow, mcol, num_mines):
         # adding mines
         invalidplaces = Grid.get_surrounding(self, mrow, mcol)
-        print(f'starting click coords: ({mrow},{mcol})')
-        print(f'invalidplaces: {invalidplaces}')
         invalidplaces.append((mrow, mcol))
 
         self.num_mines = num_mines
         minecount = num_mines
         iterations = 0
+
+        """possible_positions = []
+        mine_positions = []
+        for i in range(len(self.rows)):
+            for j in range(len(self.cols)):
+                if i, j not in invalidplaces
+                    possible_positions.append((i, j))
+        for _ in range(num_mines)
+            row, col = (possible_positions.pop(random.randint(0, len(positions)-1))
+            self.field[row][col].mine = True"""
+
+        # kinda n log n, not the best way, just pick random and see if it's not a mine already
         while minecount > 0:
-            """positions = []
-            for i in range(len(self.rows)):
-                for j in range(len(self.cols)):
-                    positions.append((i, j))
-            row, col = positions.pop(random.randint(0, self.rows*self.cols))"""
             row, col = random.randint(0, self.rows - 1), random.randint(0, self.cols - 1)
-            # at the 1st click mines shouldnt be spawned near the clicked cell
+            # at the 1st click mines shouldnt be spawned on or near the clicked cell
 
             if not self.field[row][col].mine:
                 if num_mines <= self.rows * self.cols - 9:
@@ -224,16 +231,19 @@ class Grid:
 
     def draw_data(self, row, col):
         # Draws flag for marked
-        if self.field[row][col].flagged:
-            img = self.flag_img
+        if self.field[row][col].flagged == True:
+            img = self.flagImg
+            self.win.blit(img, (col * self.sqsize + self.xpos + (self.sqsize - img.get_width()) / 2,
+                                row * self.sqsize + self.ypos + (self.sqsize - img.get_height()) / 2))
+        elif self.field[row][col].flagged == 'plucked':
+            img = self.flagPrintImg
             self.win.blit(img, (col * self.sqsize + self.xpos + (self.sqsize - img.get_width()) / 2,
                                 row * self.sqsize + self.ypos + (self.sqsize - img.get_height()) / 2))
 
-    def update(self, actions):
-        # Get the direction from inputs
+    def update(self, actions):  # unfinished
+        # moves the grid based on wasd
         direction_x = actions["right"] - actions["left"]
         direction_y = actions["down"] - actions["up"]
-        # Update the position
         self.xpos -= GRID_MOVE_SPEED * self.game.dt * direction_x
         self.ypos -= GRID_MOVE_SPEED * self.game.dt * direction_y
 
@@ -250,6 +260,7 @@ class Grid:
             for col in range(self.cols):
                 self.field[row][col].lower_img = pygame.transform.rotate(pygame.transform.scale(LOWER_CELL_IMG, (self.sqsize, self.sqsize)), self.field[row][col].random_rotation).convert()
                 self.field[row][col].cover_img = pygame.transform.rotate(pygame.transform.scale(COVER_IMG, (self.sqsize, self.sqsize)), self.field[row][col].random_rotation).convert()
-        self.flag_img = pygame.transform.scale(FLAG_IMG, (self.sqsize, self.sqsize)).convert()
+        self.flagImg = pygame.transform.scale(FLAG_IMGS[0], (self.sqsize, self.sqsize)).convert_alpha()
+        self.flagPrintImg = pygame.transform.scale(FLAG_OUTLINE, (self.sqsize, self.sqsize)).convert_alpha()
         self.rendered_nums = {i : pygame.font.Font(DEFAULT_FONT, int(self.sqsize)).render(str(i), True, NUM_COLOURS[i]) for i in NUM_COLOURS}
 

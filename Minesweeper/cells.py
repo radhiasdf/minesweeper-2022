@@ -1,8 +1,10 @@
 # for both under and cover cells?
 import random
 import pygame.transform
-from Minesweeper.constants import COVER_IMG, LOWER_CELL_IMG
+from .constants import COVER_IMG, LOWER_CELL_IMG
 degrees = [0, 90, 180, 270]
+
+
 class Cell:
     def __init__(self, row, col, sqsize):
         self.row = row

@@ -11,13 +11,11 @@ def change_colour(image, colour, special_flags=pygame.BLEND_MULT):
     return finalImage
 
 user_data = shelve.open("user_data")
-#user_data["r_c_m"] = (16, 16, 40)  # setting up default for user data?
 
 pygame.init()
 
 BG_COLOUR = "black"
 FPS = 60
-TARGET_FPS = 60
 MAX_WIN_WIDTH, MAX_WIN_HEIGHT = pygame.display.Info().current_w, pygame.display.Info().current_h
 print(MAX_WIN_WIDTH, MAX_WIN_HEIGHT)
 MINSQSIZE = 16  # the original minesweeper square size is around 16
@@ -47,7 +45,9 @@ EXPERT = (16, 30, 99)
 MODES = [['E', EASY],
          ['M', MEDIUM],
          ['H', EXPERT]]
-MAX_ROWS, MAX_COLS = 35, 60  # change this to fit max win width win height
+MAX_ROWS = (MAX_WIN_HEIGHT - 150)//MINSQSIZE
+MAX_COLS = (MAX_WIN_WIDTH - SETTINGS_WIDTH - 50)//MINSQSIZE
+
 
 #  some shader thingy
 SHADOW_COLOUR = "black"
@@ -56,9 +56,9 @@ THREE_D_OFFSET_X = MINSQSIZE * 0
 THREE_D_OFFSET_Y = MINSQSIZE * 0.13
 
 # images
-ICON = pygame.transform.scale(pygame.image.load("assets/Birch_Sign_JE1_BE1.png"), (32, 32))
-BUTTON_IMGS = [pygame.transform.scale(pygame.image.load('assets/mc_generalised_button.png'), (40, 36)),
-               pygame.transform.scale(pygame.image.load('assets/mc_generalised_button_hover.png'), (40, 36))]
+ICON = pygame.transform.scale(pygame.image.load("assets/Birch_Sign_JE2.png"), (32, 32))
+BUTTON_IMGS = [pygame.transform.scale(pygame.image.load(f'assets/{filename}'), (40, 36))
+               for filename in ('mc_generalised_button.png', 'mc_generalised_button_hover.png')]
 
 MINE_IMG = pygame.image.load('assets/TNT_ 28top_texture 29_JE2_BE2.png')
 MINE_IMG_BRIGHT = change_colour(MINE_IMG, (255, 255, 255), special_flags=pygame.BLEND_RGB_ADD)  # not perfect, i havent succeded in making a white overlay
@@ -66,7 +66,15 @@ MINE_IMG = pygame.transform.scale(MINE_IMG, (MINSQSIZE, MINSQSIZE))
 MINE_IMG_BRIGHT = pygame.transform.scale(MINE_IMG_BRIGHT, (MINSQSIZE, MINSQSIZE))
 
 
-FLAG_IMG = pygame.image.load('assets/Birch_Sign_JE1_BE1.png')
+FLAG_IMGS = [pygame.image.load(f'assets/{filename}') for filename in ("Birch_Sign_JE2.png",
+                                                                      "Dark_Oak_Sign_JE2.png",
+                                                                      "Acacia_Sign_JE2.png",
+                                                                      "Bamboo_Sign_ 28item 29_JE1_BE1.png",
+                                                                      "Crimson_Sign_JE2.png",
+                                                                      "Jungle_Sign_JE2.png",
+                                                                      "Mangrove_Sign_ 28item 29_JE1_BE1.png",
+                                                                      "Warped_Sign_JE2.png")]
+FLAG_OUTLINE = pygame.image.load('assets/Birch_Sign_JE2_outline.png')
 COVER_IMG = pygame.image.load('assets/Grass_Block_29_JE4_BE2.png')
 LOWER_CELL_IMG = pygame.image.load('assets/Sand_ 28texture 29_JE5_BE3.png')
 
