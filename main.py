@@ -1,8 +1,20 @@
-# the versioning is a bit ruined
+# the versioning is a bit ruined at first
+
+import asyncio
 import pygame.time
 from pygame import QUIT, KEYDOWN, MOUSEBUTTONDOWN
 from Minesweeper.states import *
 from Minesweeper.gui import *
+
+
+async def main():
+    game = Game()
+    while game.running:
+        game.game_loop()
+        await asyncio.sleep(0)
+
+    user_data["r_c_m"] = game.num_rows, game.num_cols, game.num_mines
+    user_data.close()
 
 
 class Game:
@@ -72,6 +84,8 @@ class Game:
     def game_loop(self):
         prev_time = time.time()
         while self.playing:
+            self.clock.tick(FPS)
+
             self.dt = time.time() - prev_time
             prev_time = time.time()
             #try: print(1/self.dt)
@@ -119,13 +133,7 @@ class Game:
             self.settings.update(self.events)
             pygame.display.update()
 
-            self.clock.tick(FPS)
+
+asyncio.run(main())
 
 
-game = Game()
-while game.running:
-    game.game_loop()
-
-user_data["r_c_m"] = game.num_rows, game.num_cols, game.num_mines
-# user_data["last_saved"] = game.current_states
-user_data.close()
